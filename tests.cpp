@@ -69,37 +69,38 @@ TEST(traits, converting_constructor) {
   ASSERT_FALSE(construct4);
 }
 
-//TEST(traits, in_place_type) {
-//  using variant1 = variant<int, float, std::string, trivial_t, std::vector<int>, no_default_t>;
-//  bool construct1 = std::is_constructible_v<variant1, in_place_type_t<throwing_move_operator_t>>;
-//  bool construct2 = std::is_constructible_v<variant1, in_place_type_t<trivial_t>>;
-//  bool construct3 = std::is_constructible_v<variant1, in_place_type_t<no_default_t>>;
-//  bool construct4 = std::is_constructible_v<variant1, in_place_type_t<std::vector<int>>, size_t, int>;
-//  bool construct5 = std::is_constructible_v<variant1, in_place_type_t<std::vector<int>>, size_t>;
-//  bool construct6 = std::is_constructible_v<variant1, in_place_type_t<std::string>>;
-//  ASSERT_FALSE(construct1);
-//  ASSERT_TRUE(construct2);
-//  ASSERT_FALSE(construct3);
-//  ASSERT_TRUE(construct4);
-//  ASSERT_TRUE(construct5);
-//  ASSERT_TRUE(construct6);
-//}
-//
-//TEST(traits, in_place_index) {
-//  using variant1 = variant<int, float, std::string, trivial_t, std::vector<int>, no_default_t>;
-//  bool construct1 = std::is_constructible_v<variant1, in_place_index_t<1337>>;
-//  bool construct2 = std::is_constructible_v<variant1, in_place_index_t<3>>;
-//  bool construct3 = std::is_constructible_v<variant1, in_place_index_t<5>>;
-//  bool construct4 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t, int>;
-//  bool construct5 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t>;
-//  bool construct6 = std::is_constructible_v<variant1, in_place_index_t<3>>;
-//  ASSERT_FALSE(construct1);
-//  ASSERT_TRUE(construct2);
-//  ASSERT_FALSE(construct3);
-//  ASSERT_TRUE(construct4);
-//  ASSERT_TRUE(construct5);
-//  ASSERT_TRUE(construct6);
-//}
+TEST(traits, in_place_type) {
+  using variant1 = variant<int, float, std::string, trivial_t, std::vector<int>, no_default_t>;
+  bool construct1 = std::is_constructible_v<variant1, in_place_type_t<throwing_move_operator_t>>;
+  bool construct2 = std::is_constructible_v<variant1, in_place_type_t<trivial_t>>;
+  bool construct3 = std::is_constructible_v<variant1, in_place_type_t<no_default_t>>;
+  bool construct4 = std::is_constructible_v<variant1, in_place_type_t<std::vector<int>>, size_t, int>;
+  bool construct5 = std::is_constructible_v<variant1, in_place_type_t<std::vector<int>>, size_t>;
+  bool construct6 = std::is_constructible_v<variant1, in_place_type_t<std::string>>;
+  ASSERT_FALSE(construct1);
+  ASSERT_TRUE(construct2);
+  ASSERT_FALSE(construct3);
+  ASSERT_TRUE(construct4);
+  ASSERT_TRUE(construct5);
+  ASSERT_TRUE(construct6);
+}
+
+TEST(traits, in_place_index) {
+  using variant1 = variant<int, float, std::string, trivial_t, std::vector<int>, no_default_t>;
+  bool construct1 = std::is_constructible_v<variant1, in_place_index_t<1337>>;
+  bool construct2 = std::is_constructible_v<variant1, in_place_index_t<3>>;
+  bool construct3 = std::is_constructible_v<variant1, in_place_index_t<5>>;
+  bool construct4 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t, int>;
+  bool construct5 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t>;
+  bool construct6 = std::is_constructible_v<variant1, in_place_index_t<3>>;
+  //variant1 v(in_place_index<1337>);
+  ASSERT_FALSE(construct1);
+  ASSERT_TRUE(construct2);
+  ASSERT_FALSE(construct3);
+  ASSERT_TRUE(construct4);
+  ASSERT_TRUE(construct5);
+  ASSERT_TRUE(construct6);
+}
 
 TEST(traits, copy_assignment) {
   using variant1 = variant<std::string, double, no_copy_t>;
@@ -206,13 +207,13 @@ TEST(traits, converting_assignment) {
 //    return false;
 //  return true;
 //}
-//
+
 //static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
-//
+
 //TEST(correctness, copy_ctor1) {
 //  ASSERT_TRUE(simple_copy_ctor_test());
 //}
-//
+
 //TEST(correctness, copy_constructor_without_default) {
 //  variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
 //  variant<no_default_t, non_trivial_copy_t> copy(orig);

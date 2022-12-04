@@ -3,110 +3,141 @@
 #include <new>
 #include <utility>
 
-// struct nullopt_t {};
-// inline constexpr nullopt_t nullopt{};
-//
-// struct in_place_t {};
-// inline constexpr in_place_t in_place{};
+///==================================================================================================================///
+
+template <class T>
+struct in_place_type_t {
+  explicit in_place_type_t() = default;
+};
+template <class T>
+inline constexpr in_place_type_t<T> in_place_type{};
+
+template <std::size_t I>
+struct in_place_index_t {
+  explicit in_place_index_t() = default;
+};
+template <std::size_t I>
+inline constexpr in_place_index_t<I> in_place_index{};
 
 ///==================================================================================================================///
 
-//template <typename... Types>
-//union Multi_Union {};
-//
-//template <typename First, typename... Rest_Types>
-//union Multi_Union<First, Rest_Types...> {
-//  //constexpr Multi_Union() = default;
-//  //  constexpr Multi_Union() : rest() { }
-//  //
-//  //  template<typename... _Args>
-//  //  constexpr Multi_Union(in_place_index_t<0>, _Args&&... __args)
-//  //      : first(in_place_index<0>, std::forward<_Args>(__args)...)
-//  //  { }
-//  //
-//  //  template<size_t _Np, typename... _Args>
-//  //  constexpr _Variadic_union(in_place_index_t<_Np>, _Args&&... __args)
-//  //      : _M_rest(in_place_index<_Np-1>, std::forward<_Args>(__args)...)
-//  //  { }
-//
-//  First first;
-//  Multi_Union<Rest_Types...> rest;
-//};
-
-///==================================================================================================================///
-
-template<bool trivial, typename... Types>
-struct base_ {};
-
-template <typename First, typename... Rest_Types>
-struct base_<false, First, Rest_Types...> {
-  base_() {}
-
-  //  template <typename... Args>
-  //  constexpr explicit base(in_place_t, Args&&... args)
-  //      : is_present{true}, data(std::forward<Args>(args)...) {}
-
-  //Multi_Union<Types...> data;
-
-  //  bool is_present{false};
-  //  union {
-  //    char dummy{};
-  //    T data;
-  //  };
-  //
-  //  constexpr void reset() {
-  //    if (is_present) {
-  //      data.~T();
-  //    }
-  //    is_present = false;
-  //  }
-  //
-//    ~base_() {
-//      //reset();
-//    }
-
-  First first;
-  base_<std::conjunction_v<std::is_trivially_destructible<Rest_Types>...>, Rest_Types...> rest;
-};
-
-template <typename First, typename... Rest_Types>
-struct base_<true, First, Rest_Types...> {
-  base_() {}
-
-  //Multi_Union<Rest_Types...> data;
-
-  First first;
-  base_<std::conjunction_v<std::is_trivially_destructible<Rest_Types>...>, Rest_Types...> rest;
-  //  template <typename... Args>
-  //  constexpr explicit base(in_place_t, Args&&... args)
-  //      : is_present{true}, data(std::forward<Args>(args)...) {}
-  //
-  //  bool is_present{false};
-  //  union {
-  //    char dummy{};
-  //    T data;
-  //  };
-  //
-  //  constexpr void reset() {
-  //    is_present = false;
-  //  }
-};
+template <bool trivial_destructible, typename... Types>
+union Multi_Union_ {};
 
 template <typename... Types>
-using base = base_<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
+using Multi_Union = Multi_Union_<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
+
+template <typename First, typename... Rest_Types>
+union Multi_Union_<true, First, Rest_Types...> {
+  Multi_Union_(){}
+
+  First first;
+  Multi_Union<Rest_Types...> rest;
+
+  template <typename... Args>
+  constexpr Multi_Union_(in_place_index_t<0>, Args&&... args) : first(std::forward<Args>(args)...) {}
+
+  template <size_t N, typename... Args>
+  constexpr Multi_Union_(in_place_index_t<N>, Args&&... args)
+      : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
+
+  template <size_t N, typename... Args>
+  void set(Args&&... args) {
+    if constexpr (N == 0)
+      new (&first) First(std::forward<Args>(args)...);
+    else
+      rest.template set<N - 1>(args...);
+  }
+
+  ~Multi_Union_() = default;
+};
+
+template <typename First, typename... Rest_Types>
+union Multi_Union_<false, First, Rest_Types...> {
+  Multi_Union_(){}
+
+  First first;
+  Multi_Union<Rest_Types...> rest;
+
+  template <typename... Args>
+  constexpr Multi_Union_(in_place_index_t<0>, Args&&... args) : first(std::forward<Args>(args)...) {}
+
+  template <size_t N, typename... Args>
+  constexpr Multi_Union_(in_place_index_t<N>, Args&&... args)
+      : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
+
+  template <size_t N, typename... Args>
+  void set(Args&&... args) {
+    if constexpr (N == 0)
+      new (&first) First(std::forward<Args>(args)...);
+    else
+      rest.template set<N - 1>(args...);
+  }
+
+  ~Multi_Union_(){};
+};
 
 ///==================================================================================================================///
 
-// template <typename T, bool trivial = std::is_trivially_copy_constructible_v<T>>
-// struct trivial_copy_constructable_base : base<T> {
+template <size_t N, typename T, typename... Rest>
+struct get_index_by_type {
+  static const size_t value = N;
+};
+
+template <size_t N, typename T, typename First, typename... Rest>
+struct get_index_by_type<N, T, First, Rest...> {
+  static const size_t value = std::is_same_v<T, First> ? N : get_index_by_type<N + 1, T, Rest...>::value;
+};
+
+///------------------------------------------------------///
+
+template <size_t, typename...>
+struct get_type_by_index;
+
+template <typename First, typename... Rest>
+struct get_type_by_index<0, First, Rest...> {
+  using type = First;
+};
+
+template <size_t N, typename First, typename... Rest>
+struct get_type_by_index<N, First, Rest...> {
+  using type = typename get_type_by_index<N - 1, Rest...>::type;
+};
+
+///==================================================================================================================///
+
+template <typename First, typename... Rest_Types>
+struct base {
+protected:
+  size_t current_index = 0;
+  Multi_Union<First, Rest_Types...> storage;
+
+public:
+  base() {}
+
+  //  constexpr base(in_place_type_t) {
+  //    static_assert(current_index < (sizeof...(Rest_Types) + 1));
+  //
+  //  }
+
+  template <size_t N, typename... Args>
+  constexpr base(in_place_index_t<N>, Args&&... args)
+      : current_index(N), storage(in_place_index<N>, std::forward<Args>(args)...) {}
+
+  template <typename T>
+  constexpr base(T x) : current_index(get_index_by_type<0, T, First, Rest_Types...>::value) {
+    // static_assert(current_index < (sizeof...(Rest_Types) + 1));
+    storage.template set<get_index_by_type<0, T, First, Rest_Types...>::value, T>(std::move(x));
+  }
+};
+
+///==================================================================================================================///
+
 template <bool trivial = false, typename... Types>
 struct trivial_copy_constructable_base_ : base<Types...> {
   using base<Types...>::base;
   constexpr trivial_copy_constructable_base_(const trivial_copy_constructable_base_& other) : base<Types...>() { ///???
-    //    if (other.is_present) {
-    //      new (&this->data) T(other.data);
-    //      this->is_present = true;
-    //    }
+    ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   }
   constexpr trivial_copy_constructable_base_(trivial_copy_constructable_base_&&) = default;
 };
@@ -122,28 +153,12 @@ using trivial_copy_constructable_base =
 
 ///==================================================================================================================///
 
-// template <typename T, bool trivial = std::is_trivially_copy_constructible_v<T>&&
-//                           std::is_trivially_copy_assignable_v<T>>
-// struct trivial_copy_assign_base : trivial_copy_constructable_base<T> {
-//   using trivial_copy_constructable_base<T>::trivial_copy_constructable_base;
 template <bool trivial = false, typename... Types>
 struct trivial_copy_assign_base_ : trivial_copy_constructable_base<Types...> {
   using trivial_copy_constructable_base<Types...>::trivial_copy_constructable_base;
   constexpr trivial_copy_assign_base_(const trivial_copy_assign_base_& other) = default;
   trivial_copy_assign_base_& operator=(const trivial_copy_assign_base_& other) {
-    //    if (this->is_present) {
-    //      if (other.is_present) {
-    //        this->data = other.data;
-    //      } else {
-    //        this->reset();
-    //      }
-    //    } else {...
-    //      if (other.is_present) {
-    //        new (&this->data) T(other.data);
-    //        this->is_present = true;
-    //      }
-    //    }
-
+    ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     return *this;
   }
 };
@@ -161,18 +176,12 @@ using trivial_copy_assign_base =
 
 ///==================================================================================================================///
 
-// template <typename T, bool trivial = std::is_trivially_move_constructible_v<T>>
-// struct trivial_move_constructable_base : trivial_copy_assign_base<T> {
-//   using trivial_copy_assign_base<T>::trivial_copy_assign_base;
 template <bool trivial = false, typename... Types>
 struct trivial_move_constructable_base_ : trivial_copy_assign_base<Types...> {
   using trivial_copy_assign_base<Types...>::trivial_copy_assign_base;
   constexpr trivial_move_constructable_base_(const trivial_move_constructable_base_&) = default;
   constexpr trivial_move_constructable_base_(trivial_move_constructable_base_&& other) {
-//    if (other.is_present) {
-//      new (&this->data) T(std::move(other.data));
-//      this->is_present = true;
-//    }
+    ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   }
   trivial_move_constructable_base_& operator=(const trivial_move_constructable_base_&) = default;
 };
@@ -188,9 +197,6 @@ using trivial_move_constructable_base =
 
 ///==================================================================================================================///
 
-//template <typename T, bool trivial = std::is_trivially_move_constructible_v<T>&& std::is_trivially_move_assignable_v<T>>
-//struct trivial_move_assign_base : trivial_move_constructable_base<T> {
-//  using trivial_move_constructable_base<T>::trivial_move_constructable_base;
 template <bool trivial = false, typename... Types>
 struct trivial_move_assign_base_ : trivial_move_constructable_base<Types...> {
   using trivial_move_constructable_base<Types...>::trivial_move_constructable_base;
@@ -199,18 +205,7 @@ struct trivial_move_assign_base_ : trivial_move_constructable_base<Types...> {
 
   trivial_move_assign_base_& operator=(const trivial_move_assign_base_&) = default;
   trivial_move_assign_base_& operator=(trivial_move_assign_base_&& other) {
-//    if (this->is_present) {
-//      if (other.is_present) {
-//        this->data = std::move(other.data);
-//      } else {
-//        this->reset();
-//      }
-//    } else {
-//      if (other.is_present) {
-//        new (&this->data) T(std::move(other.data));
-//        this->is_present = true;
-//      }
-//    }
+    ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     return *this;
   }
 };
