@@ -93,7 +93,6 @@ TEST(traits, in_place_index) {
   bool construct4 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t, int>;
   bool construct5 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t>;
   bool construct6 = std::is_constructible_v<variant1, in_place_index_t<3>>;
-  //variant1 v(in_place_index<1337>);
   ASSERT_FALSE(construct1);
   ASSERT_TRUE(construct2);
   ASSERT_FALSE(construct3);
@@ -163,57 +162,57 @@ TEST(traits, converting_assignment) {
   ASSERT_FALSE(assignment6);
 }
 
-//TEST(traits, variant_size) {
-//  using variant1 = variant<int, std::string, variant<int, std::vector<int>, size_t>, bool>;
-//  ASSERT_EQ(variant_size_v<variant1>, 4);
-//  ASSERT_EQ(variant_size_v<variant1>, variant_size_v<const variant1>);
-//  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>::value);
-//  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>{});
-//  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>{}());
-//}
-//
-//TEST(traits, variant_alternative) {
-//  using variant1 = variant<int, std::string, variant<int, std::vector<int>, size_t>, bool>;
-//  using T1 = variant_alternative_t<1, variant1>;
-//  using T2 = typename variant_alternative<1, variant1>::type;
-//  using T3 = variant_alternative_t<1, const variant1>;
-//  bool res1 = std::is_same_v<T1, std::string>;
-//  bool res2 = std::is_same_v<T1, T2>;
-//  bool res3 = std::is_same_v<const T1, T3>;
-//  ASSERT_TRUE(res1);
-//  ASSERT_TRUE(res2);
-//  ASSERT_TRUE(res3);
-//}
-//
-//static_assert(variant<int>().index() == 0, "Constexpr empty ctor failed");
-//static_assert(holds_alternative<int>(variant<int, double>()), "Constexpr empty ctor holds_alternative test failed");
-//static_assert(holds_alternative<int>(variant<int>()), "Constexpr empty ctor holds_alternative test failed");
-//static_assert(variant<int, double>().index() == 0, "Constexpr empty ctor failed");
+TEST(traits, variant_size) {
+  using variant1 = variant<int, std::string, variant<int, std::vector<int>, size_t>, bool>;
+  ASSERT_EQ(variant_size_v<variant1>, 4);
+  ASSERT_EQ(variant_size_v<variant1>, variant_size_v<const variant1>);
+  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>::value);
+  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>{});
+  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>{}());
+}
 
-//TEST(correctness, empty_ctor) {
-//  variant<int, double> v;
-//  ASSERT_TRUE(v.index() == 0);
-//  ASSERT_TRUE(holds_alternative<int>(v));
-//}
-//
-//constexpr bool simple_copy_ctor_test() {
-//  variant<int, double> x{42.0};
-//  variant<int, double> other{x};
-//  if (x.index() != other.index())
-//    return false;
-//  if (get<1>(x) != get<1>(other))
-//    return false;
-//  if (!holds_alternative<double>(x) || !holds_alternative<double>(other))
-//    return false;
-//  return true;
-//}
+TEST(traits, variant_alternative) {
+  using variant1 = variant<int, std::string, variant<int, std::vector<int>, size_t>, bool>;
+  using T1 = variant_alternative_t<1, variant1>;
+  using T2 = typename variant_alternative<1, variant1>::type;
+  using T3 = variant_alternative_t<1, const variant1>;
+  bool res1 = std::is_same_v<T1, std::string>;
+  bool res2 = std::is_same_v<T1, T2>;
+  bool res3 = std::is_same_v<const T1, T3>;
+  ASSERT_TRUE(res1);
+  ASSERT_TRUE(res2);
+  ASSERT_TRUE(res3);
+}
+
+static_assert(variant<int>().index() == 0, "Constexpr empty ctor failed");
+static_assert(holds_alternative<int>(variant<int, double>()), "Constexpr empty ctor holds_alternative test failed");
+static_assert(holds_alternative<int>(variant<int>()), "Constexpr empty ctor holds_alternative test failed");
+static_assert(variant<int, double>().index() == 0, "Constexpr empty ctor failed");
+
+TEST(correctness, empty_ctor) {
+  variant<int, double> v;
+  ASSERT_TRUE(v.index() == 0);
+  ASSERT_TRUE(holds_alternative<int>(v));
+}
+
+constexpr bool simple_copy_ctor_test() {
+  variant<int, double> x{42.0};
+  variant<int, double> other{x};
+  if (x.index() != other.index())
+    return false;
+  if (get<1>(x) != get<1>(other))
+    return false;
+  if (!holds_alternative<double>(x) || !holds_alternative<double>(other))
+    return false;
+  return true;
+}
 
 //static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
 
 //TEST(correctness, copy_ctor1) {
 //  ASSERT_TRUE(simple_copy_ctor_test());
 //}
-
+//
 //TEST(correctness, copy_constructor_without_default) {
 //  variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
 //  variant<no_default_t, non_trivial_copy_t> copy(orig);
@@ -232,7 +231,7 @@ TEST(traits, converting_assignment) {
 //TEST(correctness, copy_ctor2) {
 //  ASSERT_TRUE(direct_init_copy_ctor());
 //}
-//
+
 //constexpr bool simple_move_ctor_test() {
 //  {
 //    variant<no_copy_assignment_t> x;
@@ -248,7 +247,7 @@ TEST(traits, converting_assignment) {
 //  }
 //  return true;
 //}
-//
+
 //static_assert(simple_move_ctor_test(), "Simple constexpr move test failed");
 //
 //TEST(correctness, move_ctor) {

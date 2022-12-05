@@ -14,7 +14,8 @@ struct variant : trivial_move_assign_base<First, Rest_Types...>,
                  copy_construct_base<First, Rest_Types...>,
                  move_construct_base<First, Rest_Types...> {
 
-  //using trivial_move_assign_base<First, Rest_Types...>::trivial_move_assign_base;
+  using trivial_move_assign_base<First, Rest_Types...>::trivial_move_assign_base;
+
   constexpr variant() noexcept(std::is_nothrow_constructible_v<First>) = default;
   constexpr variant(const variant&) = default;
   constexpr variant(variant&&) noexcept(std::conjunction_v<std::is_nothrow_move_constructible<Rest_Types>...,
@@ -25,12 +26,6 @@ struct variant : trivial_move_assign_base<First, Rest_Types...>,
           std::conjunction_v<std::is_nothrow_move_constructible<Rest_Types>...,
                              std::is_nothrow_move_constructible<First>>) = default;
 
-  template <size_t N, typename... Args, typename = std::enable_if_t<N < sizeof...(Rest_Types) + 1>,
-            typename = std::enable_if_t<
-                std::is_constructible_v<typename get_type_by_index<N, First, Rest_Types...>::type, Args...>>>
-  constexpr variant(in_place_index_t<N>, Args&&... args)
-      : trivial_move_assign_base<First, Rest_Types...>(in_place_index<N>, std::forward<Args>(args)...) {}
-
 public:
   template <typename T, typename... Types>
   friend constexpr bool holds_alternative(variant<Types...> const& v);
@@ -39,79 +34,79 @@ public:
     return this->current_index;
   }
 };
+
+template <typename T, typename... Types>
+constexpr bool holds_alternative(variant<Types...> const& v) {
+  return get_index_by_type<0, T, Types...>::value == v.current_index;
+}
+
+template <size_t Index, typename... Types>
+constexpr size_t get(variant<Types...> const& v) {
+  return v.index();
+}
+
+// template <typename... Types>
+// constexpr bool operator==(variant<Types...> const& a, variant<Types...> const& b) {
+//   if (bool(a) != bool(b))
+//     return false;
 //
-//template <typename T, typename... Types>
-//constexpr bool holds_alternative(variant<Types...> const& v) {
-//  return get_index_by_type<0, T, Types...>::value == v.current_index;
-//}
+//   if (!bool(a) || !bool(b))
+//     return true;
 //
-//template <size_t Index, typename... Types>
-//constexpr size_t get(variant<Types...> const& v) {
-//  return v.index();
-//}
+//   return *a == *b;
+// }
 //
-//template <typename... Types>
-//constexpr bool operator==(variant<Types...> const& a, variant<Types...> const& b) {
-//  if (bool(a) != bool(b))
-//    return false;
+// template <typename... Types>
+// constexpr bool operator!=(variant<Types...> const& a, variant<Types...> const& b) {
+//   if (bool(a) != bool(b))
+//     return true;
 //
-//  if (!bool(a) || !bool(b))
-//    return true;
+//   if (!bool(a) || !bool(b))
+//     return false;
 //
-//  return *a == *b;
-//}
+//   return *a != *b;
+// }
 //
-//template <typename... Types>
-//constexpr bool operator!=(variant<Types...> const& a, variant<Types...> const& b) {
-//  if (bool(a) != bool(b))
-//    return true;
+// template <typename... Types>
+// constexpr bool operator<(variant<Types...> const& a, variant<Types...> const& b) {
+//   if (!bool(b))
+//     return false;
 //
-//  if (!bool(a) || !bool(b))
-//    return false;
+//   if (!bool(a))
+//     return true;
 //
-//  return *a != *b;
-//}
+//   return *a < *b;
+// }
 //
-//template <typename... Types>
-//constexpr bool operator<(variant<Types...> const& a, variant<Types...> const& b) {
-//  if (!bool(b))
-//    return false;
+// template <typename... Types>
+// constexpr bool operator<=(variant<Types...> const& a, variant<Types...> const& b) {
+//   if (!bool(a))
+//     return true;
 //
-//  if (!bool(a))
-//    return true;
+//   if (!bool(b))
+//     return false;
 //
-//  return *a < *b;
-//}
+//   return *a <= *b;
+// }
 //
-//template <typename... Types>
-//constexpr bool operator<=(variant<Types...> const& a, variant<Types...> const& b) {
-//  if (!bool(a))
-//    return true;
+// template <typename... Types>
+// constexpr bool operator>(variant<Types...> const& a, variant<Types...> const& b) {
+//   if (!bool(a))
+//     return false;
 //
-//  if (!bool(b))
-//    return false;
+//   if (!bool(b))
+//     return true;
 //
-//  return *a <= *b;
-//}
+//   return *a > *b;
+// }
 //
-//template <typename... Types>
-//constexpr bool operator>(variant<Types...> const& a, variant<Types...> const& b) {
-//  if (!bool(a))
-//    return false;
+// template <typename... Types>
+// constexpr bool operator>=(variant<Types...> const& a, variant<Types...> const& b) {
+//   if (!bool(b))
+//     return true;
 //
-//  if (!bool(b))
-//    return true;
+//   if (!bool(a))
+//     return false;
 //
-//  return *a > *b;
-//}
-//
-//template <typename... Types>
-//constexpr bool operator>=(variant<Types...> const& a, variant<Types...> const& b) {
-//  if (!bool(b))
-//    return true;
-//
-//  if (!bool(a))
-//    return false;
-//
-//  return *a >= *b;
-//}
+//   return *a >= *b;
+// }

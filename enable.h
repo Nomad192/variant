@@ -60,26 +60,25 @@ struct nothrow_default_constructable_first_ {
 
 template <bool enabled = false, class... Types>
 struct nothrow_move_construct_base_ {
-  nothrow_move_construct_base_() noexcept(
-      !std::conjunction_v<std::is_nothrow_move_constructible<Types>...>) = delete;
+  nothrow_move_construct_base_() noexcept(!std::conjunction_v<std::is_nothrow_move_constructible<Types>...>) = delete;
   constexpr nothrow_move_construct_base_(const nothrow_move_construct_base_&) = default;
   constexpr nothrow_move_construct_base_(nothrow_move_construct_base_&&) = default;
   nothrow_move_construct_base_& operator=(const nothrow_move_construct_base_&) = default;
   nothrow_move_construct_base_& operator=(nothrow_move_construct_base_&&) = default;
 };
 
-//template <bool enabled = false, class... Types>
-//struct nothrow_move_assign_base_ {
-//  nothrow_move_assign_base_() = default;
-//  constexpr nothrow_move_assign_base_(const nothrow_move_assign_base_&) = default;
-//  constexpr nothrow_move_assign_base_(nothrow_move_assign_base_&&) noexcept(
-//      !(std::conjunction_v<std::is_nothrow_move_assignable<Types>...> &&
-//        std::conjunction_v<std::is_nothrow_move_constructible<Types>...>)) = delete;
-//  nothrow_move_assign_base_& operator=(const nothrow_move_assign_base_&) = default;
-//  nothrow_move_assign_base_& operator=(nothrow_move_assign_base_&&) noexcept(
-//      !(std::conjunction_v<std::is_nothrow_move_assignable<Types>...> &&
-//        std::conjunction_v<std::is_nothrow_move_constructible<Types>...>)) = delete;
-//};
+// template <bool enabled = false, class... Types>
+// struct nothrow_move_assign_base_ {
+//   nothrow_move_assign_base_() = default;
+//   constexpr nothrow_move_assign_base_(const nothrow_move_assign_base_&) = default;
+//   constexpr nothrow_move_assign_base_(nothrow_move_assign_base_&&) noexcept(
+//       !(std::conjunction_v<std::is_nothrow_move_assignable<Types>...> &&
+//         std::conjunction_v<std::is_nothrow_move_constructible<Types>...>)) = delete;
+//   nothrow_move_assign_base_& operator=(const nothrow_move_assign_base_&) = default;
+//   nothrow_move_assign_base_& operator=(nothrow_move_assign_base_&&) noexcept(
+//       !(std::conjunction_v<std::is_nothrow_move_assignable<Types>...> &&
+//         std::conjunction_v<std::is_nothrow_move_constructible<Types>...>)) = delete;
+// };
 
 ///==================================================================================================================///
 
@@ -109,26 +108,25 @@ struct nothrow_default_constructable_first_<First, true> {
 
 template <class... Types>
 struct nothrow_move_construct_base_<true, Types...> {
-  nothrow_move_construct_base_() noexcept(
-      std::conjunction_v<std::is_nothrow_move_constructible<Types>...>) = default;
+  nothrow_move_construct_base_() noexcept(std::conjunction_v<std::is_nothrow_move_constructible<Types>...>) = default;
   constexpr nothrow_move_construct_base_(const nothrow_move_construct_base_&) = default;
   constexpr nothrow_move_construct_base_(nothrow_move_construct_base_&&) = default;
   nothrow_move_construct_base_& operator=(const nothrow_move_construct_base_&) = default;
   nothrow_move_construct_base_& operator=(nothrow_move_construct_base_&&) = default;
 };
 
-//template <class... Types>
-//struct nothrow_move_assign_base_<true, Types...> {
-//  nothrow_move_assign_base_() = default;
-//  constexpr nothrow_move_assign_base_(const nothrow_move_assign_base_&) = default;
-//  constexpr nothrow_move_assign_base_(nothrow_move_assign_base_&&) noexcept(
-//      std::conjunction_v<std::is_nothrow_move_assignable<Types>...>&&
-//          std::conjunction_v<std::is_nothrow_move_constructible<Types>...>) = default;
-//  nothrow_move_assign_base_& operator=(const nothrow_move_assign_base_&) = default;
-//  nothrow_move_assign_base_& operator=(nothrow_move_assign_base_&&) noexcept(
-//      std::conjunction_v<std::is_nothrow_move_assignable<Types>...>&&
-//          std::conjunction_v<std::is_nothrow_move_constructible<Types>...>) = default;
-//};
+// template <class... Types>
+// struct nothrow_move_assign_base_<true, Types...> {
+//   nothrow_move_assign_base_() = default;
+//   constexpr nothrow_move_assign_base_(const nothrow_move_assign_base_&) = default;
+//   constexpr nothrow_move_assign_base_(nothrow_move_assign_base_&&) noexcept(
+//       std::conjunction_v<std::is_nothrow_move_assignable<Types>...>&&
+//           std::conjunction_v<std::is_nothrow_move_constructible<Types>...>) = default;
+//   nothrow_move_assign_base_& operator=(const nothrow_move_assign_base_&) = default;
+//   nothrow_move_assign_base_& operator=(nothrow_move_assign_base_&&) noexcept(
+//       std::conjunction_v<std::is_nothrow_move_assignable<Types>...>&&
+//           std::conjunction_v<std::is_nothrow_move_constructible<Types>...>) = default;
+// };
 
 ///==================================================================================================================///
 
@@ -159,10 +157,10 @@ template <typename... Types>
 using nothrow_move_construct_base =
     nothrow_move_construct_base_<std::conjunction_v<std::is_nothrow_move_constructible<Types>...>, Types...>;
 
-//template <typename... Types>
-//using nothrow_move_assign_base =
-//    nothrow_move_assign_base_<std::conjunction_v<std::is_nothrow_move_assignable<Types>...> &&
-//                                  std::conjunction_v<std::is_nothrow_move_constructible<Types>...>,
-//                              Types...>;
+// template <typename... Types>
+// using nothrow_move_assign_base =
+//     nothrow_move_assign_base_<std::conjunction_v<std::is_nothrow_move_assignable<Types>...> &&
+//                                   std::conjunction_v<std::is_nothrow_move_constructible<Types>...>,
+//                               Types...>;
 
 ///==================================================================================================================///
