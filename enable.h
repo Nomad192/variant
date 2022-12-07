@@ -40,23 +40,23 @@ struct move_assign_base_ {
   move_assign_base_& operator=(move_assign_base_&&) = delete;
 };
 
-template <typename First, bool enabled = false>
-struct default_constructable_first_ {
-  default_constructable_first_() = delete;
-  constexpr default_constructable_first_(const default_constructable_first_&) = default;
-  constexpr default_constructable_first_(default_constructable_first_&&) = default;
-  default_constructable_first_& operator=(const default_constructable_first_&) = default;
-  default_constructable_first_& operator=(default_constructable_first_&&) = default;
-};
-
-template <typename First, bool enabled = false>
-struct nothrow_default_constructable_first_ {
-  nothrow_default_constructable_first_() noexcept(!std::is_nothrow_constructible_v<First>) = delete;
-  constexpr nothrow_default_constructable_first_(const nothrow_default_constructable_first_&) = default;
-  constexpr nothrow_default_constructable_first_(nothrow_default_constructable_first_&&) = default;
-  nothrow_default_constructable_first_& operator=(const nothrow_default_constructable_first_&) = default;
-  nothrow_default_constructable_first_& operator=(nothrow_default_constructable_first_&&) = default;
-};
+//template <typename First, bool enabled = false>
+//struct default_constructable_first_ {
+//  default_constructable_first_() = delete;
+//  constexpr default_constructable_first_(const default_constructable_first_&) = default;
+//  constexpr default_constructable_first_(default_constructable_first_&&) = default;
+//  default_constructable_first_& operator=(const default_constructable_first_&) = default;
+//  default_constructable_first_& operator=(default_constructable_first_&&) = default;
+//};
+//
+//template <typename First, bool enabled = false>
+//struct nothrow_default_constructable_first_ {
+//  nothrow_default_constructable_first_() noexcept(!std::is_nothrow_constructible_v<First>) = delete;
+//  constexpr nothrow_default_constructable_first_(const nothrow_default_constructable_first_&) = default;
+//  constexpr nothrow_default_constructable_first_(nothrow_default_constructable_first_&&) = default;
+//  nothrow_default_constructable_first_& operator=(const nothrow_default_constructable_first_&) = default;
+//  nothrow_default_constructable_first_& operator=(nothrow_default_constructable_first_&&) = default;
+//};
 
 template <bool enabled = false, class... Types>
 struct nothrow_move_construct_base_ {
@@ -94,17 +94,17 @@ struct copy_assign_base_<true, Types...> {};
 template <typename... Types>
 struct move_assign_base_<true, Types...> {};
 
-template <typename First>
-struct default_constructable_first_<First, true> {};
-
-template <typename First>
-struct nothrow_default_constructable_first_<First, true> {
-  nothrow_default_constructable_first_() noexcept(std::is_nothrow_constructible_v<First>) = default;
-  constexpr nothrow_default_constructable_first_(const nothrow_default_constructable_first_&) = default;
-  constexpr nothrow_default_constructable_first_(nothrow_default_constructable_first_&&) = default;
-  nothrow_default_constructable_first_& operator=(const nothrow_default_constructable_first_&) = default;
-  nothrow_default_constructable_first_& operator=(nothrow_default_constructable_first_&&) = default;
-};
+//template <typename First>
+//struct default_constructable_first_<First, true> {};
+//
+//template <typename First>
+//struct nothrow_default_constructable_first_<First, true> {
+//  nothrow_default_constructable_first_() noexcept(std::is_nothrow_constructible_v<First>) = default;
+//  constexpr nothrow_default_constructable_first_(const nothrow_default_constructable_first_&) = default;
+//  constexpr nothrow_default_constructable_first_(nothrow_default_constructable_first_&&) = default;
+//  nothrow_default_constructable_first_& operator=(const nothrow_default_constructable_first_&) = default;
+//  nothrow_default_constructable_first_& operator=(nothrow_default_constructable_first_&&) = default;
+//};
 
 template <class... Types>
 struct nothrow_move_construct_base_<true, Types...> {
@@ -146,12 +146,12 @@ using move_assign_base = move_assign_base_<std::conjunction_v<std::is_move_assig
                                                std::conjunction_v<std::is_move_constructible<Types>...>,
                                            Types...>;
 
-template <typename First>
-using default_constructable_first = default_constructable_first_<First, std::is_default_constructible_v<First>>;
-
-template <typename First>
-using nothrow_default_constructable_first =
-    nothrow_default_constructable_first_<First, std::is_nothrow_default_constructible_v<First>>;
+//template <typename First>
+//using default_constructable_first = default_constructable_first_<First, std::is_default_constructible_v<First>>;
+//
+//template <typename First>
+//using nothrow_default_constructable_first =
+//    nothrow_default_constructable_first_<First, std::is_nothrow_default_constructible_v<First>>;
 
 template <typename... Types>
 using nothrow_move_construct_base =

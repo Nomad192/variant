@@ -9,185 +9,201 @@
 #include "variant.h"
 #include "gtest/gtest.h"
 
-TEST(traits, destructor) {
-  using variant1 = variant<int, double, trivial_t>;
-  using variant2 = variant<int, std::string>;
-  using variant3 = variant<char, long, variant1>;
-  using variant4 = variant<char, variant2, int>;
-  ASSERT_TRUE(std::is_trivially_destructible_v<variant1>);
-  ASSERT_FALSE(std::is_trivially_destructible_v<variant2>);
-  ASSERT_TRUE(std::is_trivially_destructible_v<variant3>);
-  ASSERT_FALSE(std::is_trivially_destructible_v<variant4>);
-}
+//struct abc
+//{
+//  abc() = delete;
+//
+//  abc(int, int, int) {}
+//};
+//
+//TEST(traits, MyTest) {
+//  using variant1 = variant<abc>;
+//  bool construct1 = std::is_constructible_v<variant1, in_place_index_t<0>, int, int, int>;
+//  bool construct2 = std::is_default_constructible_v<variant1>;
+//  ASSERT_TRUE(construct1);
+//  ASSERT_FALSE(construct2);
+//}
+//
+//TEST(traits, destructor) {
+//  using variant1 = variant<int, double, trivial_t>;
+//  using variant2 = variant<int, std::string>;
+//  using variant3 = variant<char, long, variant1>;
+//  using variant4 = variant<char, variant2, int>;
+//  ASSERT_TRUE(std::is_trivially_destructible_v<variant1>);
+//  ASSERT_FALSE(std::is_trivially_destructible_v<variant2>);
+//  ASSERT_TRUE(std::is_trivially_destructible_v<variant3>);
+//  ASSERT_FALSE(std::is_trivially_destructible_v<variant4>);
+//}
+//
+//TEST(traits, default_constructor) {
+//  using variant1 = variant<std::string, int, std::vector<int>>;
+//  using variant2 = variant<no_default_t, int>;
+//  using variant3 = variant<throwing_default_t, int, double>;
+//  ASSERT_TRUE(std::is_default_constructible_v<variant1>);
+//  ASSERT_FALSE(std::is_default_constructible_v<variant2>);
+//  ASSERT_TRUE(std::is_nothrow_default_constructible_v<variant1>);
+//  ASSERT_FALSE(std::is_nothrow_default_constructible_v<variant3>);
+//}
+//
+//TEST(traits, copy_constructor) {
+//  using variant1 = variant<int, no_copy_t, std::vector<std::string>>;
+//  using variant2 = variant<std::string, std::vector<std::string>, int>;
+//  using variant3 = variant<int, double, trivial_t>;
+//  using variant4 = variant<double, int, non_trivial_copy_t>;
+//  ASSERT_FALSE(std::is_copy_constructible_v<variant1>);
+//  ASSERT_TRUE(std::is_copy_constructible_v<variant2>);
+//  ASSERT_FALSE(std::is_trivially_copy_constructible_v<variant2>);
+//  ASSERT_TRUE(std::is_trivially_copy_constructible_v<variant3>);
+//  ASSERT_FALSE(std::is_trivially_copy_constructible_v<variant4>);
+//}
+//
+//TEST(traits, move_constructor) {
+//  using variant1 = variant<int, std::string, no_move_t, double>;
+//  using variant2 = variant<double, std::string, int>;
+//  using variant3 = variant<int, trivial_t, char>;
+//  using variant4 = variant<int, double, throwing_move_operator_t>;
+//  ASSERT_FALSE(std::is_move_constructible_v<variant1>);
+//  ASSERT_TRUE(std::is_move_constructible_v<variant2>);
+//  ASSERT_TRUE(std::is_move_constructible_v<variant3>);
+//  ASSERT_TRUE(std::is_nothrow_move_constructible_v<variant2>);
+//  ASSERT_FALSE(std::is_trivially_move_constructible_v<variant2>);
+//  ASSERT_TRUE(std::is_trivially_move_constructible_v<variant3>);
+//  ASSERT_TRUE(std::is_move_constructible_v<variant4>);
+//  ASSERT_FALSE(std::is_nothrow_move_constructible_v<variant4>);
+//}
+//
+//TEST(traits, converting_constructor) {
+//  using variant1 = variant<std::string, std::vector<double>>;
+//  bool construct1 = std::is_constructible_v<variant1, std::size_t>;
+//  bool construct2 = std::is_constructible_v<variant1, const char*>;
+//  bool construct3 = std::is_nothrow_constructible_v<variant1, std::string&&>;
+//  bool construct4 = std::is_nothrow_constructible_v<variant1, const char*>;
+//  ASSERT_FALSE(construct1);
+//  ASSERT_TRUE(construct2);
+//  ASSERT_TRUE(construct3);
+//  ASSERT_FALSE(construct4);
+//}
+//
+//TEST(traits, in_place_type) {
+//  using variant1 = variant<int, float, std::string, trivial_t, std::vector<int>, no_default_t>;
+//  bool construct1 = std::is_constructible_v<variant1, in_place_type_t<throwing_move_operator_t>>;
+//  bool construct2 = std::is_constructible_v<variant1, in_place_type_t<trivial_t>>;
+//  bool construct3 = std::is_constructible_v<variant1, in_place_type_t<no_default_t>>;
+//  bool construct4 = std::is_constructible_v<variant1, in_place_type_t<std::vector<int>>, size_t, int>;
+//  bool construct5 = std::is_constructible_v<variant1, in_place_type_t<std::vector<int>>, size_t>;
+//  bool construct6 = std::is_constructible_v<variant1, in_place_type_t<std::string>>;
+//  ASSERT_FALSE(construct1);
+//  ASSERT_TRUE(construct2);
+//  ASSERT_FALSE(construct3);
+//  ASSERT_TRUE(construct4);
+//  ASSERT_TRUE(construct5);
+//  ASSERT_TRUE(construct6);
+//}
+//
+//TEST(traits, in_place_index) {
+//  using variant1 = variant<int, float, std::string, trivial_t, std::vector<int>, no_default_t>;
+//  bool construct1 = std::is_constructible_v<variant1, in_place_index_t<1337>>;
+//  bool construct2 = std::is_constructible_v<variant1, in_place_index_t<3>>;
+//  bool construct3 = std::is_constructible_v<variant1, in_place_index_t<5>>;
+//  bool construct4 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t, int>;
+//  bool construct5 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t>;
+//  bool construct6 = std::is_constructible_v<variant1, in_place_index_t<3>>;
+//  variant1 v(in_place_index_t<1300>);
+//  ASSERT_FALSE(construct1);
+//  ASSERT_TRUE(construct2);
+//  ASSERT_FALSE(construct3);
+//  ASSERT_TRUE(construct4);
+//  ASSERT_TRUE(construct5);
+//  ASSERT_TRUE(construct6);
+//}
+//
+//TEST(traits, copy_assignment) {
+//  using variant1 = variant<std::string, double, no_copy_t>;
+//  using variant2 = variant<std::vector<short>, int, no_copy_assignment_t>;
+//  using variant3 = variant<trivial_t, int, non_trivial_copy_assignment_t>;
+//  using variant4 = variant<double, non_trivial_copy_t, bool>;
+//  using variant5 = variant<int, short, char, trivial_t, bool>;
+//  using variant6 = variant<int, double, no_copy_t>;
+//  ASSERT_FALSE(std::is_copy_assignable_v<variant1>);
+//  ASSERT_FALSE(std::is_copy_assignable_v<variant2>);
+//  ASSERT_TRUE(std::is_copy_assignable_v<variant3>);
+//  ASSERT_TRUE(std::is_copy_assignable_v<variant4>);
+//  ASSERT_TRUE(std::is_copy_assignable_v<variant5>);
+//  ASSERT_FALSE(std::is_trivially_copy_assignable_v<variant3>);
+//  ASSERT_FALSE(std::is_trivially_copy_assignable_v<variant4>);
+//  ASSERT_TRUE(std::is_trivially_copy_assignable_v<variant5>);
+//  ASSERT_FALSE(std::is_copy_assignable_v<variant6>);
+//}
+//
+//TEST(traits, move_assignment) {
+//  using variant1 = variant<std::string, double, no_move_t>;
+//  using variant2 = variant<int, std::vector<std::string>, no_move_assignment_t, bool>;
+//  using variant3 = variant<trivial_t, int, std::vector<double>>;
+//  using variant4 = variant<double, std::string, bool>;
+//  using variant5 = variant<int, short, char, trivial_t, bool>;
+//  using variant6 = variant<int, std::string, throwing_move_operator_t, double>;
+//  using variant7 = variant<int, throwing_move_assignment_t, double>;
+//  using variant8 = variant<int, double, no_move_t>;
+//  ASSERT_FALSE(std::is_move_assignable_v<variant1>);
+//  ASSERT_FALSE(std::is_move_assignable_v<variant2>);
+//  ASSERT_TRUE(std::is_move_assignable_v<variant3>);
+//  ASSERT_TRUE(std::is_move_assignable_v<variant4>);
+//  ASSERT_TRUE(std::is_move_assignable_v<variant5>);
+//  ASSERT_FALSE(std::is_trivially_move_assignable_v<variant3>);
+//  ASSERT_FALSE(std::is_trivially_move_assignable_v<variant4>);
+//  ASSERT_TRUE(std::is_trivially_move_assignable_v<variant5>);
+//  ASSERT_TRUE(std::is_move_assignable_v<variant6>);
+//  ASSERT_TRUE(std::is_move_assignable_v<variant7>);
+//  ASSERT_FALSE(std::is_nothrow_move_assignable_v<variant6>);
+//  ASSERT_FALSE(std::is_nothrow_move_assignable_v<variant7>);
+//  ASSERT_TRUE(std::is_nothrow_move_assignable_v<variant3>);
+//  ASSERT_TRUE(std::is_nothrow_move_assignable_v<variant4>);
+//  ASSERT_TRUE(std::is_nothrow_move_assignable_v<variant5>);
+//  ASSERT_FALSE(std::is_move_assignable_v<variant8>);
+//}
+//
+//TEST(traits, converting_assignment) {
+//  using variant1 = variant<std::string, std::vector<char>, bool>;
+//  bool assignment1 = std::is_assignable_v<variant1&, std::string&&>;
+//  bool assignment2 = std::is_assignable_v<variant1&, const char*>;
+//  bool assignment3 = std::is_assignable_v<variant1&, size_t>;
+//  bool assignment4 = std::is_nothrow_assignable_v<variant1&, std::string&&>;
+//  bool assignment5 = std::is_nothrow_assignable_v<variant1&, const std::string&>;
+//  bool assignment6 = std::is_assignable_v<variant1&, double*>;
+//  ASSERT_TRUE(assignment1);
+//  ASSERT_TRUE(assignment2);
+//  ASSERT_FALSE(assignment3);
+//  ASSERT_TRUE(assignment4);
+//  ASSERT_FALSE(assignment5);
+//  ASSERT_FALSE(assignment6);
+//}
+//
+//TEST(traits, variant_size) {
+//  using variant1 = variant<int, std::string, variant<int, std::vector<int>, size_t>, bool>;
+//  ASSERT_EQ(variant_size_v<variant1>, 4);
+//  ASSERT_EQ(variant_size_v<variant1>, variant_size_v<const variant1>);
+//  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>::value);
+//  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>{});
+//  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>{}());
+//}
+//
+//TEST(traits, variant_alternative) {
+//  using variant1 = variant<int, std::string, variant<int, std::vector<int>, size_t>, bool>;
+//  using T1 = variant_alternative_t<1, variant1>;
+//  using T2 = typename variant_alternative<1, variant1>::type;
+//  using T3 = variant_alternative_t<1, const variant1>;
+//  bool res1 = std::is_same_v<T1, std::string>;
+//  bool res2 = std::is_same_v<T1, T2>;
+//  bool res3 = std::is_same_v<const T1, T3>;
+//  ASSERT_TRUE(res1);
+//  ASSERT_TRUE(res2);
+//  ASSERT_TRUE(res3);
+//}
 
-TEST(traits, default_constructor) {
-  using variant1 = variant<std::string, int, std::vector<int>>;
-  using variant2 = variant<no_default_t, int>;
-  using variant3 = variant<throwing_default_t, int, double>;
-  ASSERT_TRUE(std::is_default_constructible_v<variant1>);
-  ASSERT_FALSE(std::is_default_constructible_v<variant2>);
-  ASSERT_TRUE(std::is_nothrow_default_constructible_v<variant1>);
-  ASSERT_FALSE(std::is_nothrow_default_constructible_v<variant3>);
-}
-
-TEST(traits, copy_constructor) {
-  using variant1 = variant<int, no_copy_t, std::vector<std::string>>;
-  using variant2 = variant<std::string, std::vector<std::string>, int>;
-  using variant3 = variant<int, double, trivial_t>;
-  using variant4 = variant<double, int, non_trivial_copy_t>;
-  ASSERT_FALSE(std::is_copy_constructible_v<variant1>);
-  ASSERT_TRUE(std::is_copy_constructible_v<variant2>);
-  ASSERT_FALSE(std::is_trivially_copy_constructible_v<variant2>);
-  ASSERT_TRUE(std::is_trivially_copy_constructible_v<variant3>);
-  ASSERT_FALSE(std::is_trivially_copy_constructible_v<variant4>);
-}
-
-TEST(traits, move_constructor) {
-  using variant1 = variant<int, std::string, no_move_t, double>;
-  using variant2 = variant<double, std::string, int>;
-  using variant3 = variant<int, trivial_t, char>;
-  using variant4 = variant<int, double, throwing_move_operator_t>;
-  ASSERT_FALSE(std::is_move_constructible_v<variant1>);
-  ASSERT_TRUE(std::is_move_constructible_v<variant2>);
-  ASSERT_TRUE(std::is_move_constructible_v<variant3>);
-  ASSERT_TRUE(std::is_nothrow_move_constructible_v<variant2>);
-  ASSERT_FALSE(std::is_trivially_move_constructible_v<variant2>);
-  ASSERT_TRUE(std::is_trivially_move_constructible_v<variant3>);
-  ASSERT_TRUE(std::is_move_constructible_v<variant4>);
-  ASSERT_FALSE(std::is_nothrow_move_constructible_v<variant4>);
-}
-
-TEST(traits, converting_constructor) {
-  using variant1 = variant<std::string, std::vector<double>>;
-  bool construct1 = std::is_constructible_v<variant1, std::size_t>;
-  bool construct2 = std::is_constructible_v<variant1, const char*>;
-  bool construct3 = std::is_nothrow_constructible_v<variant1, std::string&&>;
-  bool construct4 = std::is_nothrow_constructible_v<variant1, const char*>;
-  ASSERT_FALSE(construct1);
-  ASSERT_TRUE(construct2);
-  ASSERT_TRUE(construct3);
-  ASSERT_FALSE(construct4);
-}
-
-TEST(traits, in_place_type) {
-  using variant1 = variant<int, float, std::string, trivial_t, std::vector<int>, no_default_t>;
-  bool construct1 = std::is_constructible_v<variant1, in_place_type_t<throwing_move_operator_t>>;
-  bool construct2 = std::is_constructible_v<variant1, in_place_type_t<trivial_t>>;
-  bool construct3 = std::is_constructible_v<variant1, in_place_type_t<no_default_t>>;
-  bool construct4 = std::is_constructible_v<variant1, in_place_type_t<std::vector<int>>, size_t, int>;
-  bool construct5 = std::is_constructible_v<variant1, in_place_type_t<std::vector<int>>, size_t>;
-  bool construct6 = std::is_constructible_v<variant1, in_place_type_t<std::string>>;
-  ASSERT_FALSE(construct1);
-  ASSERT_TRUE(construct2);
-  ASSERT_FALSE(construct3);
-  ASSERT_TRUE(construct4);
-  ASSERT_TRUE(construct5);
-  ASSERT_TRUE(construct6);
-}
-
-TEST(traits, in_place_index) {
-  using variant1 = variant<int, float, std::string, trivial_t, std::vector<int>, no_default_t>;
-  bool construct1 = std::is_constructible_v<variant1, in_place_index_t<1337>>;
-  bool construct2 = std::is_constructible_v<variant1, in_place_index_t<3>>;
-  bool construct3 = std::is_constructible_v<variant1, in_place_index_t<5>>;
-  bool construct4 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t, int>;
-  bool construct5 = std::is_constructible_v<variant1, in_place_index_t<4>, size_t>;
-  bool construct6 = std::is_constructible_v<variant1, in_place_index_t<3>>;
-  ASSERT_FALSE(construct1);
-  ASSERT_TRUE(construct2);
-  ASSERT_FALSE(construct3);
-  ASSERT_TRUE(construct4);
-  ASSERT_TRUE(construct5);
-  ASSERT_TRUE(construct6);
-}
-
-TEST(traits, copy_assignment) {
-  using variant1 = variant<std::string, double, no_copy_t>;
-  using variant2 = variant<std::vector<short>, int, no_copy_assignment_t>;
-  using variant3 = variant<trivial_t, int, non_trivial_copy_assignment_t>;
-  using variant4 = variant<double, non_trivial_copy_t, bool>;
-  using variant5 = variant<int, short, char, trivial_t, bool>;
-  using variant6 = variant<int, double, no_copy_t>;
-  ASSERT_FALSE(std::is_copy_assignable_v<variant1>);
-  ASSERT_FALSE(std::is_copy_assignable_v<variant2>);
-  ASSERT_TRUE(std::is_copy_assignable_v<variant3>);
-  ASSERT_TRUE(std::is_copy_assignable_v<variant4>);
-  ASSERT_TRUE(std::is_copy_assignable_v<variant5>);
-  ASSERT_FALSE(std::is_trivially_copy_assignable_v<variant3>);
-  ASSERT_FALSE(std::is_trivially_copy_assignable_v<variant4>);
-  ASSERT_TRUE(std::is_trivially_copy_assignable_v<variant5>);
-  ASSERT_FALSE(std::is_copy_assignable_v<variant6>);
-}
-
-TEST(traits, move_assignment) {
-  using variant1 = variant<std::string, double, no_move_t>;
-  using variant2 = variant<int, std::vector<std::string>, no_move_assignment_t, bool>;
-  using variant3 = variant<trivial_t, int, std::vector<double>>;
-  using variant4 = variant<double, std::string, bool>;
-  using variant5 = variant<int, short, char, trivial_t, bool>;
-  using variant6 = variant<int, std::string, throwing_move_operator_t, double>;
-  using variant7 = variant<int, throwing_move_assignment_t, double>;
-  using variant8 = variant<int, double, no_move_t>;
-  ASSERT_FALSE(std::is_move_assignable_v<variant1>);
-  ASSERT_FALSE(std::is_move_assignable_v<variant2>);
-  ASSERT_TRUE(std::is_move_assignable_v<variant3>);
-  ASSERT_TRUE(std::is_move_assignable_v<variant4>);
-  ASSERT_TRUE(std::is_move_assignable_v<variant5>);
-  ASSERT_FALSE(std::is_trivially_move_assignable_v<variant3>);
-  ASSERT_FALSE(std::is_trivially_move_assignable_v<variant4>);
-  ASSERT_TRUE(std::is_trivially_move_assignable_v<variant5>);
-  ASSERT_TRUE(std::is_move_assignable_v<variant6>);
-  ASSERT_TRUE(std::is_move_assignable_v<variant7>);
-  ASSERT_FALSE(std::is_nothrow_move_assignable_v<variant6>);
-  ASSERT_FALSE(std::is_nothrow_move_assignable_v<variant7>);
-  ASSERT_TRUE(std::is_nothrow_move_assignable_v<variant3>);
-  ASSERT_TRUE(std::is_nothrow_move_assignable_v<variant4>);
-  ASSERT_TRUE(std::is_nothrow_move_assignable_v<variant5>);
-  ASSERT_FALSE(std::is_move_assignable_v<variant8>);
-}
-
-TEST(traits, converting_assignment) {
-  using variant1 = variant<std::string, std::vector<char>, bool>;
-  bool assignment1 = std::is_assignable_v<variant1&, std::string&&>;
-  bool assignment2 = std::is_assignable_v<variant1&, const char*>;
-  bool assignment3 = std::is_assignable_v<variant1&, size_t>;
-  bool assignment4 = std::is_nothrow_assignable_v<variant1&, std::string&&>;
-  bool assignment5 = std::is_nothrow_assignable_v<variant1&, const std::string&>;
-  bool assignment6 = std::is_assignable_v<variant1&, double*>;
-  ASSERT_TRUE(assignment1);
-  ASSERT_TRUE(assignment2);
-  ASSERT_FALSE(assignment3);
-  ASSERT_TRUE(assignment4);
-  ASSERT_FALSE(assignment5);
-  ASSERT_FALSE(assignment6);
-}
-
-TEST(traits, variant_size) {
-  using variant1 = variant<int, std::string, variant<int, std::vector<int>, size_t>, bool>;
-  ASSERT_EQ(variant_size_v<variant1>, 4);
-  ASSERT_EQ(variant_size_v<variant1>, variant_size_v<const variant1>);
-  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>::value);
-  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>{});
-  ASSERT_EQ(variant_size_v<variant1>, variant_size<variant1>{}());
-}
-
-TEST(traits, variant_alternative) {
-  using variant1 = variant<int, std::string, variant<int, std::vector<int>, size_t>, bool>;
-  using T1 = variant_alternative_t<1, variant1>;
-  using T2 = typename variant_alternative<1, variant1>::type;
-  using T3 = variant_alternative_t<1, const variant1>;
-  bool res1 = std::is_same_v<T1, std::string>;
-  bool res2 = std::is_same_v<T1, T2>;
-  bool res3 = std::is_same_v<const T1, T3>;
-  ASSERT_TRUE(res1);
-  ASSERT_TRUE(res2);
-  ASSERT_TRUE(res3);
-}
-
-static_assert(variant<int>().index() == 0, "Constexpr empty ctor failed");
-static_assert(holds_alternative<int>(variant<int, double>()), "Constexpr empty ctor holds_alternative test failed");
-static_assert(holds_alternative<int>(variant<int>()), "Constexpr empty ctor holds_alternative test failed");
-static_assert(variant<int, double>().index() == 0, "Constexpr empty ctor failed");
+//static_assert(variant<int>().index() == 0, "Constexpr empty ctor failed");
+//static_assert(holds_alternative<int>(variant<int, double>()), "Constexpr empty ctor holds_alternative test failed");
+//static_assert(holds_alternative<int>(variant<int>()), "Constexpr empty ctor holds_alternative test failed");
+//static_assert(variant<int, double>().index() == 0, "Constexpr empty ctor failed");
 
 TEST(correctness, empty_ctor) {
   variant<int, double> v;
@@ -207,18 +223,18 @@ constexpr bool simple_copy_ctor_test() {
   return true;
 }
 
-//static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
+//static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");з-
 
-//TEST(correctness, copy_ctor1) {
-//  ASSERT_TRUE(simple_copy_ctor_test());
-//}
-//
-//TEST(correctness, copy_constructor_without_default) {
-//  variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
-//  variant<no_default_t, non_trivial_copy_t> copy(orig);
-//  ASSERT_EQ(orig.index(), copy.index());
-//  ASSERT_EQ(get<1>(orig).x + 1, get<non_trivial_copy_t>(copy).x);
-//}
+TEST(correctness, copy_ctor1) {
+  ASSERT_TRUE(simple_copy_ctor_test());
+}
+
+TEST(correctness, copy_constructor_without_default) {
+  variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
+  variant<no_default_t, non_trivial_copy_t> copy(orig);
+  ASSERT_EQ(orig.index(), copy.index());
+  ASSERT_EQ(get<1>(orig).x + 1, get<non_trivial_copy_t>(copy).x);
+}
 //
 //constexpr bool direct_init_copy_ctor() {
 //  variant<no_copy_assignment_t> x;
@@ -231,7 +247,7 @@ constexpr bool simple_copy_ctor_test() {
 //TEST(correctness, copy_ctor2) {
 //  ASSERT_TRUE(direct_init_copy_ctor());
 //}
-
+//
 //constexpr bool simple_move_ctor_test() {
 //  {
 //    variant<no_copy_assignment_t> x;

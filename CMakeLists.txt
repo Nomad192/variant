@@ -24,6 +24,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   target_link_options(tests PUBLIC -stdlib=libc++)
 endif()
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  message(STATUS "Enabling concepts...")
+  target_compile_options(tests PUBLIC -fconcepts)
+endif()
+
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
   message(STATUS "Enabling _GLIBCXX_DEBUG...")
   target_compile_options(tests PUBLIC -D_GLIBCXX_DEBUG)
