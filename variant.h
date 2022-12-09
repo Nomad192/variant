@@ -41,18 +41,19 @@ struct variant {
     //      return stored;
     //    }, other);
     //
-    visit(
-        [](auto&& arg) {
-          using T = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same_v<T, int>)
-            std::cout << "int with value " << arg << '\n';
-          else if constexpr (std::is_same_v<T, float>)
-            std::cout << "long with value " << arg << '\n';
-          else if constexpr (std::is_same_v<T, double>)
-            std::cout << "double with value " << arg << '\n';
-          ;
-        },
-        other);
+    std::cout << "aaaa" << std::endl;
+    //    visit(
+    //        [](auto&& arg) {
+    //          using T = std::decay_t<decltype(arg)>;
+    //          if constexpr (std::is_same_v<T, int>)
+    //            std::cout << "int with value " << arg << '\n';
+    //          else if constexpr (std::is_same_v<T, float>)
+    //            std::cout << "long with value " << arg << '\n';
+    //          else if constexpr (std::is_same_v<T, double>)
+    //            std::cout << "double with value " << arg << '\n';
+    //          ;
+    //        },
+    //        other);
 
     //    current_index = get_index_by_type<decltype(stored)>::index;
     //    std::cout << "ok " << stored << " " << current_index << std::endl;
@@ -150,10 +151,16 @@ constexpr T& get(const variant<Types...>& v) {
 //    }
 //  }
 //};
+//
+//template <class T>
+//constexpr T&& as_move_ref(T& v) {
+//  return std::move(v);
+//}
 
-template <class T>
-constexpr T&& as_move_ref(T& v) {
-  return std::move(v);
+template <typename TupleT, typename Fn>
+auto for_each_tuple2(TupleT&& tp, Fn&& fn) {
+  return std::apply([&fn](auto&&... args) { return (fn(std::forward<std::decay_t<decltype(args)>>(args)), ...); },
+                    std::forward<TupleT>(tp));
 }
 
 template <size_t Index, typename Visitor, typename Tuple, typename FV, typename... Variants>
@@ -165,7 +172,7 @@ constexpr static decltype(auto) visit_(Visitor&& visitor, Tuple&& tuple, FV&& fi
     if constexpr (sizeof...(Variants) > 0) {
       return visit_<0>(visitor, std::tuple_cat(tuple, new_argv), std::forward<Variants>(rest_variants)...);
     } else {
-      return std::apply(std::forward<Visitor>(visitor), std::tuple_cat(tuple, new_argv));
+      return for_each_tuple2(std::tuple_cat(tuple, new_argv), std::forward<Visitor>(visitor));
     }
   } else if constexpr (Index + 1 < std::decay_t<decltype(first_variant)>::size()) {
     return visit_<Index + 1>(std::forward<Visitor>(visitor), tuple, std::forward<FV>(first_variant),
