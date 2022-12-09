@@ -9,6 +9,13 @@
 #include "variant.h"
 #include "gtest/gtest.h"
 
+
+TEST(my, move_test) {
+  using variant1 = variant<double, int, float>;
+  variant1 v = 15;
+  variant1 v2 = std::move(v);
+}
+
 //struct abc
 //{
 //  abc() = delete;
@@ -211,30 +218,30 @@ TEST(correctness, empty_ctor) {
   ASSERT_TRUE(holds_alternative<int>(v));
 }
 
-constexpr bool simple_copy_ctor_test() {
-  variant<int, double> x{42.0};
-  variant<int, double> other{x};
-  if (x.index() != other.index())
-    return false;
-  if (get<1>(x) != get<1>(other))
-    return false;
-  if (!holds_alternative<double>(x) || !holds_alternative<double>(other))
-    return false;
-  return true;
-}
+//constexpr bool simple_copy_ctor_test() {
+//  variant<int, double> x{42.0};
+//  variant<int, double> other{x};
+//  if (x.index() != other.index())
+//    return false;
+//  if (get<1>(x) != get<1>(other))
+//    return false;
+//  if (!holds_alternative<double>(x) || !holds_alternative<double>(other))
+//    return false;
+//  return true;
+//}
 
-//static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");з-
+//static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
 
-TEST(correctness, copy_ctor1) {
-  ASSERT_TRUE(simple_copy_ctor_test());
-}
-
-TEST(correctness, copy_constructor_without_default) {
-  variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
-  variant<no_default_t, non_trivial_copy_t> copy(orig);
-  ASSERT_EQ(orig.index(), copy.index());
-  ASSERT_EQ(get<1>(orig).x + 1, get<non_trivial_copy_t>(copy).x);
-}
+//TEST(correctness, copy_ctor1) {
+//  ASSERT_TRUE(simple_copy_ctor_test());
+//}
+//
+//TEST(correctness, copy_constructor_without_default) {
+//  variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
+//  variant<no_default_t, non_trivial_copy_t> copy(orig);
+//  ASSERT_EQ(orig.index(), copy.index());
+//  ASSERT_EQ(get<1>(orig).x + 1, get<non_trivial_copy_t>(copy).x);
+//}
 //
 //constexpr bool direct_init_copy_ctor() {
 //  variant<no_copy_assignment_t> x;
@@ -359,23 +366,23 @@ TEST(correctness, copy_constructor_without_default) {
 //  ASSERT_ANY_THROW(v = 42);
 //  ASSERT_EQ(get<0>(v), s);
 //}
-//
-//TEST(correctness, visit) {
-//  using V = variant<int, long, double>;
-//  V v1 = 42;
-//  V v2 = 1337L;
-//  V v3 = 0.5;
-//  bool was_called = false;
-//  visit(
-//      [&](int i, long l, double d) {
-//        ASSERT_EQ(i, 42);
-//        ASSERT_EQ(l, 1337L);
-//        ASSERT_EQ(d, 0.5);
-//        was_called = true;
-//      },
-//      v1, v2, v3);
-//  ASSERT_TRUE(was_called);
-//}
+
+TEST(correctness, visit) {
+  using V = variant<int, long, double>;
+  V v1 = 42;
+  V v2 = 1337L;
+  V v3 = 0.5;
+  bool was_called = false;
+  visit(
+      [&](int i, long l, double d) {
+        ASSERT_EQ(i, 42);
+        ASSERT_EQ(l, 1337L);
+        ASSERT_EQ(d, 0.5);
+        was_called = true;
+      },
+      v1, v2, v3);
+  ASSERT_TRUE(was_called);
+}
 //
 //TEST(correctness, emplace) {
 //  using V = variant<std::vector<int>, std::string>;
@@ -515,7 +522,7 @@ TEST(correctness, copy_constructor_without_default) {
 //    ASSERT_TRUE(&*ptr == nullptr);
 //  }
 //}
-//
+
 //TEST(visits, visit_valueless) {
 //  variant<throwing_move_operator_t> x;
 //  try {
@@ -545,53 +552,53 @@ TEST(correctness, copy_constructor_without_default) {
 //  result = visit(visitor3, v);
 //  ASSERT_EQ(result, 42);
 //}
-//
-//TEST(visits, visit_overload) {
-//  variant<char const*> v = "abce";
-//  auto visitor = overload{[](const std::string&) -> bool { return false; }, [](bool) -> bool { return true; }};
-//  ASSERT_TRUE(visit(visitor, v));
-//}
-//
-//constexpr bool test_visit() {
-//  using V = variant<int, short, long>;
-//  V a1(1);
-//  V b1(2);
-//  V c1(3);
-//  bool res1 = (visit(sqr_sum_visitor{}, a1, b1, c1) == 14);
-//
-//  V a2(in_place_index<0>, 2);
-//  V b2(in_place_index<1>, 2);
-//  V c2(in_place_index<2>, 2);
-//  bool res2 = (visit(sqr_sum_visitor{}, a2, b2, c2) == 12);
-//  return res1 && res2;
-//}
-//
-//static_assert(test_visit(), "Visit is not constexpr");
-//
-//TEST(visits, visit_visitor_forwarding) {
-//  variant<int> var = 322;
-//  strange_visitor vis;
-//  int val1 = visit(vis, var);
-//  ASSERT_EQ(val1, 322);
-//  int val2 = visit(strange_visitor(), var);
-//  ASSERT_EQ(val2, 323);
-//  int val3 = visit(std::as_const(vis), var);
-//  ASSERT_EQ(val3, 324);
-//  int val4 = visit(std::move(std::as_const(vis)), var);
-//  ASSERT_EQ(val4, 325);
-//}
-//
-//TEST(visits, visit_args_forwarding) {
-//  variant<only_movable> var;
-//  int val1 = visit([](only_movable const&) { return 322; }, var);
-//  ASSERT_EQ(val1, 322);
-//  int val2 = visit([](only_movable&) { return 322; }, var);
-//  ASSERT_EQ(val2, 322);
+
+TEST(visits, visit_overload) {
+  variant<char const*> v = "abce";
+  auto visitor = overload{[](const std::string&) -> bool { return false; }, [](bool) -> bool { return true; }};
+  ASSERT_TRUE(visit(visitor, v));
+}
+
+constexpr bool test_visit() {
+  using V = variant<int, short, long>;
+  V a1(1);
+  V b1(2);
+  V c1(3);
+  bool res1 = (visit(sqr_sum_visitor{}, a1, b1, c1) == 14);
+
+  V a2(in_place_index<0>, 2);
+  V b2(in_place_index<1>, 2);
+  V c2(in_place_index<2>, 2);
+  bool res2 = (visit(sqr_sum_visitor{}, a2, b2, c2) == 12);
+  return res1 && res2;
+}
+
+static_assert(test_visit(), "Visit is not constexpr");
+
+TEST(visits, visit_visitor_forwarding) {
+  variant<int> var = 322;
+  strange_visitor vis;
+  int val1 = visit(vis, var);
+  ASSERT_EQ(val1, 322);
+  int val2 = visit(strange_visitor(), var);
+  ASSERT_EQ(val2, 323);
+  int val3 = visit(std::as_const(vis), var);
+  ASSERT_EQ(val3, 324);
+  int val4 = visit(std::move(std::as_const(vis)), var);
+  ASSERT_EQ(val4, 325);
+}
+
+TEST(visits, visit_args_forwarding) {
+  variant<only_movable> var;
+  int val1 = visit([](only_movable const&) { return 322; }, var);
+  ASSERT_EQ(val1, 322);
+  int val2 = visit([](only_movable&) { return 322; }, var);
+  ASSERT_EQ(val2, 322);
 //  int val3 = visit([](only_movable const&&) { return 322; }, std::move(std::as_const(var)));
 //  ASSERT_EQ(val3, 322);
 //  int val4 = visit([](only_movable&&) { return 322; }, std::move(var));
 //  ASSERT_EQ(val4, 322);
-//}
+}
 //
 //TEST(swap, valueless) {
 //  throwing_move_operator_t::swap_called = 0;

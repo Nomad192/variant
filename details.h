@@ -3,7 +3,7 @@
 #include <utility>
 
 template <typename First, typename... Rest>
-class variant;
+struct variant;
 
 ///==================================================================================================================///
 /// cppreference moment:
@@ -89,13 +89,13 @@ struct get_index_by_type_t<N, T, First, Rest...> {
   static const size_t index = std::is_same_v<T, First> ? N : get_index_by_type_t<N + 1, T, Rest...>::index;
 };
 
-template <typename... Types>
-using get_index_by_type = get_index_by_type_t<0, Types...>;
+template <typename T, typename... Types>
+using get_index_by_type = get_index_by_type_t<0, T, Types...>;
 
 ///------------------------------------------------------///
 
 template <size_t, typename...>
-struct get_type_by_index;
+struct get_type_by_index {};
 
 template <typename First, typename... Rest>
 struct get_type_by_index<0, First, Rest...> {
