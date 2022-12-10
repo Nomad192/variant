@@ -6,7 +6,9 @@ template <typename First, typename... Rest>
 struct variant;
 
 ///==================================================================================================================///
-/// cppreference moment:
+/// https://en.cppreference.com/ Moment
+///==================================================================================================================///
+/// in_place
 
 template <class T>
 struct in_place_type_t {
@@ -24,7 +26,9 @@ struct in_place_index_t {
 template <std::size_t I>
 inline constexpr in_place_index_t<I> in_place_index{};
 
-///------------------------------------------------------///
+/// END: in_place
+///==================================================================================================================///
+/// variant_size
 
 template <typename V>
 struct variant_size;
@@ -44,7 +48,9 @@ struct variant_size<variant<Types...>> : std::integral_constant<size_t, sizeof..
 template <typename V>
 inline constexpr size_t variant_size_v = variant_size<V>::value;
 
-///------------------------------------------------------///
+/// END: variant_size
+///==================================================================================================================///
+/// variant_alternative
 
 template <size_t N, typename V>
 struct variant_alternative;
@@ -57,8 +63,12 @@ struct variant_alternative<0, variant<First, Rest...>> {
   using type = First;
 };
 
+///------------------------------------------------------///
+
 template <size_t N, typename V>
 using variant_alternative_t = typename variant_alternative<N, V>::type;
+
+///------------------------------------------------------///
 
 template <size_t N, typename V>
 struct variant_alternative<N, const V> {
@@ -75,9 +85,29 @@ struct variant_alternative<N, const volatile V> {
   using type = std::add_cv_t<variant_alternative_t<N, V>>;
 };
 
-///------------------------------------------------------///
-
+/// END: variant_alternative
 ///==================================================================================================================///
+/// END: cppreference moment
+///==================================================================================================================///
+/// Standard Moment
+
+class bad_variant_access : public std::exception {
+public:
+  bad_variant_access() noexcept = default;
+  [[maybe_unused]] explicit bad_variant_access(const char* text_) noexcept : text(text_) {}
+
+  const char* what() const noexcept override {
+    return text;
+  }
+
+private:
+  // Must point to a string with static storage duration:
+  const char* text = "bad variant access";
+};
+
+/// END: Standard Moment
+///==================================================================================================================///
+/// My Helper
 
 template <size_t N, typename T, typename... Rest>
 struct get_index_by_type_t {
@@ -92,19 +122,5 @@ struct get_index_by_type_t<N, T, First, Rest...> {
 template <typename T, typename... Types>
 using get_index_by_type = get_index_by_type_t<0, T, Types...>;
 
-///------------------------------------------------------///
-
-template <size_t, typename...>
-struct get_type_by_index {};
-
-template <typename First, typename... Rest>
-struct get_type_by_index<0, First, Rest...> {
-  using type = First;
-};
-
-template <size_t N, typename First, typename... Rest>
-struct get_type_by_index<N, First, Rest...> {
-  using type = typename get_type_by_index<N - 1, Rest...>::type;
-};
-
+/// END: My Helper
 ///==================================================================================================================///

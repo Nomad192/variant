@@ -9,12 +9,12 @@
 #include "variant.h"
 #include "gtest/gtest.h"
 
-
-TEST(my, move_test) {
-  using variant1 = variant<double, int, float>;
-  variant1 v = 15;
-  variant1 v2 = std::move(v);
-}
+//
+//TEST(my, move_test) {
+//  using variant1 = variant<double, int, float>;
+//  variant1 v = 15;
+//  variant1 v2 = std::move(v);
+//}
 
 //struct abc
 //{
@@ -373,15 +373,15 @@ TEST(correctness, visit) {
   V v2 = 1337L;
   V v3 = 0.5;
   bool was_called = false;
-//  visit(
-//      [&](int i, long l, double d) {
-//        ASSERT_EQ(i, 42);
-//        ASSERT_EQ(l, 1337L);
-//        ASSERT_EQ(d, 0.5);
-//        was_called = true;
-//      },
-//      v1, v2, v3);
-//  ASSERT_TRUE(was_called);
+  visit(
+      [&](int i, long l, double d) {
+        ASSERT_EQ(i, 42);
+        ASSERT_EQ(l, 1337L);
+        ASSERT_EQ(d, 0.5);
+        was_called = true;
+      },
+      v1, v2, v3);
+  ASSERT_TRUE(was_called);
 }
 //
 //TEST(correctness, emplace) {
@@ -553,6 +553,10 @@ TEST(correctness, visit) {
 //  ASSERT_EQ(result, 42);
 //}
 
+
+
+
+
 TEST(visits, visit_overload) {
   variant<char const*> v = "abce";
   auto visitor = overload{[](const std::string&) -> bool { return false; }, [](bool) -> bool { return true; }};
@@ -573,7 +577,7 @@ constexpr bool test_visit() {
   return res1 && res2;
 }
 
-//static_assert(test_visit(), "Visit is not constexpr");
+static_assert(test_visit(), "Visit is not constexpr");
 
 TEST(visits, visit_visitor_forwarding) {
   variant<int> var = 322;
@@ -592,13 +596,16 @@ TEST(visits, visit_args_forwarding) {
   variant<only_movable> var;
   int val1 = visit([](only_movable const&) { return 322; }, var);
   ASSERT_EQ(val1, 322);
-//  int val2 = visit([](only_movable&) { return 322; }, var);
-//  ASSERT_EQ(val2, 322);
+  int val2 = visit([](only_movable&) { return 322; }, var);
+  ASSERT_EQ(val2, 322);
   int val3 = visit([](only_movable const&&) { return 322; }, std::move(std::as_const(var)));
   ASSERT_EQ(val3, 322);
   int val4 = visit([](only_movable&&) { return 322; }, std::move(var));
   ASSERT_EQ(val4, 322);
 }
+
+
+
 //
 //TEST(swap, valueless) {
 //  throwing_move_operator_t::swap_called = 0;
