@@ -17,12 +17,27 @@ struct multi_union_helper_t {
   ///================================================================================================================///
   /// set
 
+  template <size_t Index>
+  constexpr static void reset(size_t index, multi_union_t<First, Rest...>& mu)
+  {
+    if (Index == index)
+      mu.first.~First();
+    else
+      return  multi_union_helper_t<Rest...>::template reset<Index + 1>(index, mu.rest);
+  }
+
   template <size_t Index, typename... Args>
-  constexpr static void set(multi_union_t<First, Rest...>& mu, Args&&... args) {
+  constexpr static void set(size_t index, multi_union_t<First, Rest...>& mu, Args&&... args) {
+    multi_union_helper_t<First, Rest...>::template reset<0>(index, mu);
+    multi_union_helper_t<First, Rest...>::template only_set<Index>(mu, std::forward<Args>(args)...);
+  }
+
+  template <size_t Index, typename... Args>
+  constexpr static void only_set(multi_union_t<First, Rest...>& mu, Args&&... args) {
     if constexpr (Index == 0)
       new (std::addressof(mu.first)) First(std::forward<Args>(args)...);
     else
-      multi_union_helper_t<Rest...>::template set<Index - 1, Args...>(mu.rest, std::forward<Args>(args)...);
+      multi_union_helper_t<Rest...>::template only_set<Index - 1, Args...>(mu.rest, std::forward<Args>(args)...);
   }
 
   /// END: set
@@ -88,17 +103,17 @@ struct multi_union_helper_t {
 
 template <typename First, typename... Rest_Types>
 union multi_union_t<First, Rest_Types...> {
-  constexpr multi_union_t() = default;
+  First first;
+  multi_union_t<Rest_Types...> rest;
 
-  template <size_t N, typename... Args>
-  constexpr explicit multi_union_t(in_place_index_t<N>, Args&&... args)
-      : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
+  constexpr multi_union_t() {}
 
   template <typename... Args>
   constexpr explicit multi_union_t(in_place_index_t<0>, Args&&... args) : first(std::forward<Args>(args)...) {}
 
-  First first;
-  multi_union_t<Rest_Types...> rest;
+  template <size_t N, typename... Args>
+  constexpr explicit multi_union_t(in_place_index_t<N>, Args&&... args)
+      : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
 
   ~multi_union_t() = default;
 };

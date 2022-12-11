@@ -111,7 +111,7 @@ private:
 
 template <size_t N, typename T, typename... Rest>
 struct get_index_by_type_t {
-  static const size_t index = N;
+  static const size_t index = -1;
 };
 
 template <size_t N, typename T, typename First, typename... Rest>

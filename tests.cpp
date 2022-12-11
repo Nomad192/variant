@@ -9,12 +9,24 @@
 #include "variant.h"
 #include "gtest/gtest.h"
 
-//
+
 // TEST(my, move_test) {
 //  using variant1 = variant<double, int, float>;
 //  variant1 v = 15;
 //  variant1 v2 = std::move(v);
 //}
+
+TEST(my, copy_test) {
+  using variant1 = variant<double, int, float>;
+  auto val = 15.1f;
+  variant1 v1 = val;
+  ASSERT_EQ(get<decltype(val)>(v1), val);
+
+  variant1 v2(v1);
+
+  ASSERT_EQ(v2.index(), v1.index());
+  ASSERT_EQ(get<decltype(val)>(v1), get<decltype(val)>(v2));
+}
 
 // struct abc
 //{
@@ -207,10 +219,10 @@
 //   ASSERT_TRUE(res3);
 // }
 
-// static_assert(variant<int>().index() == 0, "Constexpr empty ctor failed");
-// static_assert(holds_alternative<int>(variant<int, double>()), "Constexpr empty ctor holds_alternative test failed");
-// static_assert(holds_alternative<int>(variant<int>()), "Constexpr empty ctor holds_alternative test failed");
-// static_assert(variant<int, double>().index() == 0, "Constexpr empty ctor failed");
+static_assert(variant<int>().index() == 0, "Constexpr empty ctor failed");
+static_assert(holds_alternative<int>(variant<int, double>()), "Constexpr empty ctor holds_alternative test failed");
+static_assert(holds_alternative<int>(variant<int>()), "Constexpr empty ctor holds_alternative test failed");
+static_assert(variant<int, double>().index() == 0, "Constexpr empty ctor failed");
 
 TEST(correctness, empty_ctor) {
   variant<int, double> v;
@@ -230,19 +242,19 @@ TEST(correctness, empty_ctor) {
 //   return true;
 // }
 
-// static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
+ //static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
 
 // TEST(correctness, copy_ctor1) {
 //   ASSERT_TRUE(simple_copy_ctor_test());
 // }
-//
+
 // TEST(correctness, copy_constructor_without_default) {
 //   variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
 //   variant<no_default_t, non_trivial_copy_t> copy(orig);
 //   ASSERT_EQ(orig.index(), copy.index());
 //   ASSERT_EQ(get<1>(orig).x + 1, get<non_trivial_copy_t>(copy).x);
 // }
-//
+
 // constexpr bool direct_init_copy_ctor() {
 //   variant<no_copy_assignment_t> x;
 //   variant<no_copy_assignment_t> other{x};
@@ -250,11 +262,11 @@ TEST(correctness, empty_ctor) {
 //     return false;
 //   return true;
 // }
-//
+
 // TEST(correctness, copy_ctor2) {
 //   ASSERT_TRUE(direct_init_copy_ctor());
 // }
-//
+////
 // constexpr bool simple_move_ctor_test() {
 //   {
 //     variant<no_copy_assignment_t> x;

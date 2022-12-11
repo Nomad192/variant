@@ -42,8 +42,15 @@ public:
   template <typename T>
   constexpr variant(T x) : variant(in_place_type<T>, x) {}
 
-  constexpr variant(const variant& other) = default;
-  constexpr variant(variant&& other) {
+  constexpr variant(const variant& other)
+  {
+    visit([&](auto other_val) {
+      current_index = get_index_by_type<decltype(other_val), First, Rest...>::index;
+      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage, other_val);
+    }, other);
+  }
+
+  constexpr variant(variant&& other) = delete;// {
     //    auto stored = visit([](auto& stored) {
     //      return stored;
     //    }, other);
@@ -63,11 +70,11 @@ public:
 
     //    current_index = get_index_by_type<decltype(stored)>::index;
     //    std::cout << "ok " << stored << " " << current_index << std::endl;
-  }
+  //}
   //      noexcept(std::conjunction_v<std::is_nothrow_move_constructible<Rest>...,
   //                                                           std::is_nothrow_move_constructible<First>>)
   //= delete;
-  variant& operator=(const variant&) = delete;
+  variant& operator=(const variant&)= delete;
   variant& operator=(variant&&)
       //      noexcept(
       //      std::conjunction_v<std::is_nothrow_move_assignable<Rest>...,
