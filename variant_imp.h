@@ -7,6 +7,13 @@
 
 template <typename First, typename... Rest>
 struct variant {
+private:
+  size_t current_index = 0;
+  multi_union_t<First, Rest...> storage;
+
+public:
+  ///------------------------------------------------------------------------------------///
+  /// constructors
 
   constexpr variant() : variant(in_place_index<0>) {}
   template <size_t N, typename... Args
@@ -69,65 +76,67 @@ struct variant {
       //                             std::is_nothrow_move_constructible<First>>)
       = delete;
 
-private:
-  //  template <size_t N = 0>
-  //  struct current_index_t {
-  //    template <size_t I>
-  //    explicit constexpr current_index_t(in_place_index_t<I>) : index(I) {}
-  //    explicit constexpr current_index_t(size_t i) : index(i) {}
-  //
-  //    size_t index = N;
-  //  };
-
-  // current_index_t<0> current_index;
-
-  size_t current_index = 0;
-  multi_union_t<First, Rest...> storage;
+  /// END: constructors
+  ///------------------------------------------------------------------------------------///
 
 public:
-  //  template <typename T, typename... Types>
-  //  friend constexpr bool holds_alternative(variant<Types...> const& v);
-
   constexpr size_t index() const noexcept {
     return current_index;
   }
 
   ///------------------------------------------------------------------------------------///
+  /// get_from_index
 
   template <size_t Index>
   constexpr variant_alternative_t<Index, variant<First, Rest...>>& get_from_index() & {
-    //    if (Index != index())
-    //      throw bad_variant_access();
+    if (Index != index())
+      throw bad_variant_access();
     return multi_union_helper_t<First, Rest...>::template get<Index>(this->storage);
   }
 
   template <size_t Index>
   constexpr variant_alternative_t<Index, variant<First, Rest...>>&& get_from_index() && {
-    //    if (Index != index())
-    //      throw bad_variant_access();
+    if (Index != index())
+      throw bad_variant_access();
     return std::move(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage));
   }
 
   template <size_t Index>
   constexpr variant_alternative_t<Index, variant<First, Rest...>> const& get_from_index() const& {
-    //    if (Index != index())
-    //      throw bad_variant_access();
+    if (Index != index())
+      throw bad_variant_access();
     return multi_union_helper_t<First, Rest...>::template get<Index>(this->storage);
   }
 
   template <size_t Index>
   constexpr variant_alternative_t<Index, variant<First, Rest...>> const&& get_from_index() const&& {
-    //    if (Index != index())
-    //      throw bad_variant_access();
+    if (Index != index())
+      throw bad_variant_access();
     return std::move(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage));
   }
 
+  /// END: get_from_index
   ///------------------------------------------------------------------------------------///
+  /// get_if_from_index
 
-  template <typename T>
-  constexpr decltype(auto) get_from_type() const noexcept {
-    return get_from_index<get_index_by_type<T, First, Rest...>::index>();
+  template <std::size_t Index>
+  constexpr std::add_pointer_t<std::variant_alternative_t<Index, std::variant<First, Rest...>>>
+  get_if_from_index() noexcept {
+    if (Index != index())
+      return nullptr;
+    return std::addressof(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage));
   }
+
+  template <std::size_t Index>
+  constexpr std::add_pointer_t<const std::variant_alternative_t<Index, std::variant<First, Rest...>>>
+  get_if_from_index() const noexcept {
+    if (Index != index())
+      return nullptr;
+    return std::addressof(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage));
+  }
+
+  /// END: get_if_from_index
+  ///------------------------------------------------------------------------------------///
 
   constexpr static size_t size() noexcept {
     return sizeof...(Rest) + 1;

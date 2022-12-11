@@ -438,16 +438,16 @@ TEST(correctness, visit) {
 //  }
 //  FAIL();
 //}
-//
-// constexpr bool get_if_test_basic() {
-//  variant<float, double, long double> v = 4.5;
-//  if (!get_if<double>(&v))
-//    return false;
-//  return true;
-//}
-//
-// static_assert(get_if_test_basic(), "Bad get_if behavior");
-//
+
+ constexpr bool get_if_test_basic() {
+  variant<float, double, long double> v = 4.5;
+  if (!get_if<double>(&v))
+    return false;
+  return true;
+}
+
+ static_assert(get_if_test_basic(), "Bad get_if behavior");
+
 // TEST(correctness, multiple_same_types) {
 //  variant<int, const int, int const, volatile int const> v;
 //  v.emplace<int>(4);
