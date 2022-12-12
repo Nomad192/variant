@@ -105,8 +105,8 @@ template <typename First, typename... Rest_Types>
 union multi_union_t<First, Rest_Types...> {
   First first;
   multi_union_t<Rest_Types...> rest;
-
-  constexpr multi_union_t() {}
+  char for_trivial_initialization;
+  constexpr multi_union_t() : for_trivial_initialization(0) {}
 
   template <typename... Args>
   constexpr explicit multi_union_t(in_place_index_t<0>, Args&&... args) : first(std::forward<Args>(args)...) {}

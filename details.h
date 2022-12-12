@@ -122,5 +122,28 @@ struct get_index_by_type_t<N, T, First, Rest...> {
 template <typename T, typename... Types>
 using get_index_by_type = get_index_by_type_t<0, T, Types...>;
 
+///==================================================================================================================///
+/// in_copy_index_t
+
+template <std::size_t I>
+struct in_copy_index_t {
+  explicit in_copy_index_t() = default;
+};
+template <std::size_t I>
+inline constexpr in_copy_index_t<I> in_copy_index{};
+
+/// END: in_copy_index_t
+///------------------------------------------------------///
+/// in_move_index_t
+
+template <std::size_t I>
+struct in_move_index_t {
+  explicit in_move_index_t() = default;
+};
+template <std::size_t I>
+inline constexpr in_move_index_t<I> in_move_index{};
+
+/// END: in_move_index_t
+///==================================================================================================================///
 /// END: My Helper
 ///==================================================================================================================///
