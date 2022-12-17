@@ -43,11 +43,12 @@ struct multi_union_helper_t {
       multi_union_helper_t<Rest...>::template only_set<Index - 1, Args...>(mu.rest, std::forward<Args>(args)...);
   }
 
-  constexpr static void copy(size_t ind, multi_union_t<First, Rest...> const& from, multi_union_t<First, Rest...>& to) {
+  template <typename Other_Variant>
+  constexpr static void construct_from_other(size_t ind, Other_Variant&& from, multi_union_t<First, Rest...>& to) {
     if(ind == 0 || sizeof...(Rest) == 0)
-      new (std::addressof(to.first)) First(from.first);
+      new (std::addressof(to.first)) First(std::forward<Other_Variant>(from).first);
     else if constexpr (sizeof...(Rest) > 0)
-      multi_union_helper_t<Rest...>::copy(ind - 1, from.rest, to.rest);
+      multi_union_helper_t<Rest...>::template construct_from_other(ind - 1, from.rest, to.rest);
   }
 
   /// END: set

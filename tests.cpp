@@ -10,11 +10,11 @@
 #include "gtest/gtest.h"
 
 
-// TEST(my, move_test) {
-//  using variant1 = variant<double, int, float>;
-//  variant1 v = 15;
-//  variant1 v2 = std::move(v);
-//}
+ TEST(my, move_test) {
+  using variant1 = variant<double, int, float>;
+  variant1 v = 15;
+  variant1 v2 = std::move(v);
+}
 
  template <class Var>
  constexpr bool my_test_equal(const Var& l, const Var& r, bool expect_equal) {
@@ -366,58 +366,58 @@ TEST(correctness, empty_ctor) {
    ASSERT_TRUE(direct_init_copy_ctor());
  }
 
-//
-// constexpr bool simple_move_ctor_test() {
-//   {
-//     variant<no_copy_assignment_t> x;
-//     variant<no_copy_assignment_t> other{std::move(x)};
-//     if (!holds_alternative<no_copy_assignment_t>(x) || !holds_alternative<no_copy_assignment_t>(other))
-//       return false;
-//   }
-//   {
-//     variant<int, double> x{42};
-//     variant<int, double> y = std::move(x);
-//     if (x.index() != y.index() || x.index() != 0 || get<0>(x) != get<0>(y))
-//       return false;
-//   }
-//   return true;
-// }
 
-// static_assert(simple_move_ctor_test(), "Simple constexpr move test failed");
-//
-// TEST(correctness, move_ctor) {
-//   simple_move_ctor_test();
-//
-//   variant<coin_wrapper> x;
-//   variant<coin_wrapper> y = std::move(x);
-//   ASSERT_TRUE(!get<0>(x).has_coins());
-//   ASSERT_TRUE(get<0>(y).has_coins() == 1);
-// }
-//
-// constexpr bool simple_value_move_ctor() {
-//   {
-//     only_movable x;
-//     variant<only_movable> y(std::move(x));
-//     if (x.has_coin() || !get<0>(y).has_coin())
-//       return false;
-//   }
-//   {
-//     coin_wrapper x;
-//     variant<coin_wrapper> y(std::move(x));
-//     if (x.has_coins() || !get<0>(y).has_coins())
-//       return false;
-//   }
-//   return true;
-// }
-//
-// static_assert(simple_value_move_ctor(), "Simple value-forwarding ctor failed");
-//
+ constexpr bool simple_move_ctor_test() {
+   {
+     variant<no_copy_assignment_t> x;
+     variant<no_copy_assignment_t> other{std::move(x)};
+     if (!holds_alternative<no_copy_assignment_t>(x) || !holds_alternative<no_copy_assignment_t>(other))
+       return false;
+   }
+   {
+     variant<int, double> x{42};
+     variant<int, double> y = std::move(x);
+     if (x.index() != y.index() || x.index() != 0 || get<0>(x) != get<0>(y))
+       return false;
+   }
+   return true;
+ }
+
+ static_assert(simple_move_ctor_test(), "Simple constexpr move test failed");
+
+ TEST(correctness, move_ctor) {
+   simple_move_ctor_test();
+
+   variant<coin_wrapper> x;
+   variant<coin_wrapper> y = std::move(x);
+   ASSERT_TRUE(!get<0>(x).has_coins());
+   ASSERT_TRUE(get<0>(y).has_coins() == 1);
+ }
+
+ constexpr bool simple_value_move_ctor() {
+   {
+     only_movable x;
+     variant<only_movable> y(std::move(x));
+     if (x.has_coin() || !get<0>(y).has_coin())
+       return false;
+   }
+   {
+     coin_wrapper x;
+     variant<coin_wrapper> y(std::move(x));
+     if (x.has_coins() || !get<0>(y).has_coins())
+       return false;
+   }
+   return true;
+ }
+
+ static_assert(simple_value_move_ctor(), "Simple value-forwarding ctor failed");
+
 // TEST(correctness, value_move_ctor) {
 //   simple_value_move_ctor();
 //   variant<int, coin_wrapper> x(yac_coin{});
 //   ASSERT_TRUE(x.index() == 0);
 // }
-//
+
 // TEST(correctness, alternative_selection) {
 //   {
 //     variant<char, std::optional<char16_t>> v = u'\u2043';

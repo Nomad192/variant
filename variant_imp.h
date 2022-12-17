@@ -6,7 +6,11 @@
 /// variant
 
 template <typename... Types>
-concept triv_copy_constructible = std::conjunction_v<std::is_trivially_copy_constructible<Types>...>;
+concept trivially_copy_constructible = std::conjunction_v<std::is_trivially_copy_constructible<Types>...>;
+
+template <typename... Types>
+concept trivially_move_constructible = std::conjunction_v<std::is_trivially_move_constructible<Types>...>;
+
 
 template <typename First, typename... Rest>
 struct variant {
@@ -45,10 +49,10 @@ public:
     // storage, std::forward<Args>(args)...);
   }
   template <typename T>
-  constexpr variant(T x) : variant(in_place_type<T>, x) {}
+  constexpr variant(T x) : variant(in_place_type<T>, std::forward<T>(x)) {}
 
 
-  constexpr variant(const variant& other) requires(triv_copy_constructible<First, Rest...>) = default;
+  constexpr variant(const variant& other) requires(trivially_copy_constructible<First, Rest...>) = default;
 //
 //  struct visiter
 //  {
@@ -60,7 +64,7 @@ public:
 //  };
 //
 
-  constexpr variant(const variant& other) requires(!triv_copy_constructible<First, Rest...>)
+  constexpr variant(const variant& other)
   {
 //    if constexpr (other.index() == 0)
 //    {
@@ -69,7 +73,7 @@ public:
 
     current_index = -1;
     if(other.index() != -1) {
-      mu_help::copy(other.index(), other.storage, this->storage);
+      mu_help::template construct_from_other(other.index(), other.storage, this->storage);
       current_index = other.index();
     }
 
@@ -80,7 +84,15 @@ public:
 //    }, other);
   }
 
-  constexpr variant(variant&& other) = delete;// {
+  constexpr variant(variant&& other) requires(trivially_move_constructible<First, Rest...>) = default;
+
+  constexpr variant(variant&& other) {
+    current_index = -1;
+    if(other.index() != -1) {
+      mu_help::template construct_from_other(other.index(), std::move(other.storage), this->storage);
+      current_index = other.index();
+    }
+  }
     //    auto stored = visit([](auto& stored) {
     //      return stored;
     //    }, other);
