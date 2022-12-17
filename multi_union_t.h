@@ -23,10 +23,13 @@ struct multi_union_helper_t {
   template <size_t Index>
   constexpr static void reset(size_t index, multi_union_t<First, Rest...>& mu)
   {
-    if (Index == index)
-      mu.first.~First();
-    else
-      return  multi_union_helper_t<Rest...>::template reset<Index + 1>(index, mu.rest);
+    if constexpr (sizeof...(Rest) > 0)
+    {
+      if (Index == index)
+        mu.first.~First();
+      else
+        return  multi_union_helper_t<Rest...>::template reset<Index + 1>(index, mu.rest);
+    }
   }
 
   template <size_t Index, typename... Args>

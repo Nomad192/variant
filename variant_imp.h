@@ -128,9 +128,24 @@ public:
   /// END: constructors
   ///------------------------------------------------------------------------------------///
 
-public:
   constexpr size_t index() const noexcept {
     return current_index;
+  }
+
+  template <typename T>
+  void emplace(T x)
+  {
+    current_index = -1;
+    mu_help::template set<get_index_by_type<T, First, Rest...>::index, T>(index(), storage, std::forward<T>(x));
+    current_index = get_index_by_type<T, First, Rest...>::index;
+  }
+
+  template <size_t Index, typename T>
+  void emplace(T x)
+  {
+    current_index = -1;
+    mu_help::template set<Index, T>(index(), storage, std::forward<T>(x));
+    current_index = Index;
   }
 
   ///------------------------------------------------------------------------------------///

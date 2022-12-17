@@ -495,23 +495,23 @@ TEST(correctness, visit) {
       v1, v2, v3);
   ASSERT_TRUE(was_called);
 }
-//
-// TEST(correctness, emplace) {
-//  using V = variant<std::vector<int>, std::string>;
-//  std::string s = "A fairly long string that will cause an allocation";
-//  std::vector<int> t = {1, 2, 3};
-//  V v = s;
-//  ASSERT_EQ(v.index(), 1);
-//  v.emplace<0>(t);
-//  ASSERT_EQ(v.index(), 0);
-//  ASSERT_EQ(get<0>(v), t);
-//  v.emplace<std::string>(s);
-//  ASSERT_EQ(v.index(), 1);
-//  ASSERT_EQ(get<1>(v), s);
-//  v.emplace<0>(t);
-//  ASSERT_EQ(v.index(), 0);
-//  ASSERT_EQ(get<0>(v), t);
-//}
+
+ TEST(correctness, emplace) {
+  using V = variant<std::vector<int>, std::string>;
+  std::string s = "A fairly long string that will cause an allocation";
+  std::vector<int> t = {1, 2, 3};
+  V v = s;
+  ASSERT_EQ(v.index(), 1);
+  v.emplace<0>(t);
+  ASSERT_EQ(v.index(), 0);
+  ASSERT_EQ(get<0>(v), t);
+  v.emplace<std::string>(s);
+  ASSERT_EQ(v.index(), 1);
+  ASSERT_EQ(get<1>(v), s);
+  v.emplace<0>(t);
+  ASSERT_EQ(v.index(), 0);
+  ASSERT_EQ(get<0>(v), t);
+}
 //
 // constexpr bool in_place_ctor() {
 //  variant<bool, double> x1(in_place_type<double>, 42);
