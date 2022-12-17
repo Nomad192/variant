@@ -329,43 +329,44 @@ TEST(correctness, empty_ctor) {
   ASSERT_TRUE(holds_alternative<int>(v));
 }
 
-// constexpr bool simple_copy_ctor_test() {
-//   variant<int, double> x{42.0};
-//   variant<int, double> other{x};
-//   if (x.index() != other.index())
-//     return false;
-//   if (get<1>(x) != get<1>(other))
-//     return false;
-//   if (!holds_alternative<double>(x) || !holds_alternative<double>(other))
-//     return false;
-//   return true;
-// }
+ constexpr bool simple_copy_ctor_test() {
+   variant<int, double> x{42.0};
+   variant<int, double> other{x};
+   if (x.index() != other.index())
+     return false;
+   if (get<1>(x) != get<1>(other))
+     return false;
+   if (!holds_alternative<double>(x) || !holds_alternative<double>(other))
+     return false;
+   return true;
+ }
 
- //static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
+ static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
 
-// TEST(correctness, copy_ctor1) {
-//   ASSERT_TRUE(simple_copy_ctor_test());
-// }
+ TEST(correctness, copy_ctor1) {
+   ASSERT_TRUE(simple_copy_ctor_test());
+ }
 
-// TEST(correctness, copy_constructor_without_default) {
-//   variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
-//   variant<no_default_t, non_trivial_copy_t> copy(orig);
-//   ASSERT_EQ(orig.index(), copy.index());
-//   ASSERT_EQ(get<1>(orig).x + 1, get<non_trivial_copy_t>(copy).x);
-// }
+ TEST(correctness, copy_constructor_without_default) {
+   variant<no_default_t, non_trivial_copy_t> orig(in_place_index<1>, 123);
+   variant<no_default_t, non_trivial_copy_t> copy(orig);
+   ASSERT_EQ(orig.index(), copy.index());
+   ASSERT_EQ(get<1>(orig).x + 1, get<non_trivial_copy_t>(copy).x);
+ }
 
-// constexpr bool direct_init_copy_ctor() {
-//   variant<no_copy_assignment_t> x;
-//   variant<no_copy_assignment_t> other{x};
-//   if (!holds_alternative<no_copy_assignment_t>(x) || !holds_alternative<no_copy_assignment_t>(other))
-//     return false;
-//   return true;
-// }
+ constexpr bool direct_init_copy_ctor() {
+   variant<no_copy_assignment_t> x;
+   variant<no_copy_assignment_t> other{x};
+   if (!holds_alternative<no_copy_assignment_t>(x) || !holds_alternative<no_copy_assignment_t>(other))
+     return false;
+   return true;
+ }
 
-// TEST(correctness, copy_ctor2) {
-//   ASSERT_TRUE(direct_init_copy_ctor());
-// }
-////
+ TEST(correctness, copy_ctor2) {
+   ASSERT_TRUE(direct_init_copy_ctor());
+ }
+
+//
 // constexpr bool simple_move_ctor_test() {
 //   {
 //     variant<no_copy_assignment_t> x;

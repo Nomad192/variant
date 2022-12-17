@@ -5,11 +5,16 @@
 ///==================================================================================================================///
 /// variant
 
+template <typename... Types>
+concept triv_copy_constructible = std::conjunction_v<std::is_trivially_copy_constructible<Types>...>;
+
 template <typename First, typename... Rest>
 struct variant {
 private:
   size_t current_index = 0;
   multi_union_t<First, Rest...> storage;
+
+  using mu_help = multi_union_helper_t<First, Rest...>;
 
 public:
   ///------------------------------------------------------------------------------------///
@@ -42,12 +47,37 @@ public:
   template <typename T>
   constexpr variant(T x) : variant(in_place_type<T>, x) {}
 
-  constexpr variant(const variant& other)
+
+  constexpr variant(const variant& other) requires(triv_copy_constructible<First, Rest...>) = default;
+//
+//  struct visiter
+//  {
+//    template <typename Arg>
+//    void operator()(Arg&& other_val)
+//    {
+//      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage, other_val);
+//    }
+//  };
+//
+
+  constexpr variant(const variant& other) requires(!triv_copy_constructible<First, Rest...>)
   {
-    visit([&](auto other_val) {
-      current_index = get_index_by_type<decltype(other_val), First, Rest...>::index;
-      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage, other_val);
-    }, other);
+//    if constexpr (other.index() == 0)
+//    {
+//      new (std::addressof(storage.first)) First(other.storage.first);
+//    }
+
+    current_index = -1;
+    if(other.index() != -1) {
+      mu_help::copy(other.index(), other.storage, this->storage);
+      current_index = other.index();
+    }
+
+      ///wtf aaaaaaaaaaaaaaaaaaaaaa
+//    visit([&](auto other_val) -> void {
+//      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage, other_val);
+//      current_index = get_index_by_type<decltype(other_val), First, Rest...>::index;
+//    }, other);
   }
 
   constexpr variant(variant&& other) = delete;// {

@@ -37,10 +37,17 @@ struct multi_union_helper_t {
 
   template <size_t Index, typename... Args>
   constexpr static void only_set(multi_union_t<First, Rest...>& mu, Args&&... args) {
-    if constexpr (Index == 0)
+    if constexpr (sizeof...(Rest) == 0 || Index == 0)
       new (std::addressof(mu.first)) First(std::forward<Args>(args)...);
-    else
+    else if constexpr (sizeof...(Rest) > 0)
       multi_union_helper_t<Rest...>::template only_set<Index - 1, Args...>(mu.rest, std::forward<Args>(args)...);
+  }
+
+  constexpr static void copy(size_t ind, multi_union_t<First, Rest...> const& from, multi_union_t<First, Rest...>& to) {
+    if(ind == 0 || sizeof...(Rest) == 0)
+      new (std::addressof(to.first)) First(from.first);
+    else if constexpr (sizeof...(Rest) > 0)
+      multi_union_helper_t<Rest...>::copy(ind - 1, from.rest, to.rest);
   }
 
   /// END: set
@@ -135,7 +142,6 @@ union multi_union_t_<true, First, Rest_Types...> {
   template <size_t N, typename... Args>
   constexpr explicit multi_union_t_(in_place_index_t<N>, Args&&... args)
       : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
-
 
   ~multi_union_t_() = default;
 };
