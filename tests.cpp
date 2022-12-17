@@ -16,6 +16,12 @@
 //  variant1 v2 = std::move(v);
 //}
 
+ template <class Var>
+ constexpr bool my_test_equal(const Var& l, const Var& r, bool expect_equal) {
+  return ((l == r) == expect_equal) && (!(l != r) == expect_equal) && ((r == l) == expect_equal) &&
+         (!(r != l) == expect_equal);
+}
+
 TEST(my, copy_test) {
   using variant1 = variant<double, int, float>;
   auto val = 15.1f;
@@ -26,6 +32,99 @@ TEST(my, copy_test) {
 
   ASSERT_EQ(v2.index(), v1.index());
   ASSERT_EQ(get<decltype(val)>(v1), get<decltype(val)>(v2));
+}
+
+struct ok
+{
+  int a;
+  ok() : a(0) {}
+  ok(int a): a(a) {}
+
+  bool operator==(const ok& other) const
+  {
+    return this->a == other.a;
+  }
+  bool operator<(const ok& other) const
+  {
+    return this->a < other.a;
+  }
+  bool operator>(const ok& other) const
+  {
+    return this->a > other.a;
+  }
+};
+
+
+struct my_non_trivial_int_wrapper_t {
+  my_non_trivial_int_wrapper_t() : x{0} {}
+  my_non_trivial_int_wrapper_t(int x) : x{x} {}
+  my_non_trivial_int_wrapper_t& operator=(int i) {
+    x = i + 1;
+    return *this;
+  }
+
+  friend constexpr bool operator==(my_non_trivial_int_wrapper_t const& lhs,
+                                   my_non_trivial_int_wrapper_t const& rhs) noexcept {
+    return lhs.x == rhs.x;
+  }
+  friend constexpr bool operator!=(my_non_trivial_int_wrapper_t const& lhs,
+                                   my_non_trivial_int_wrapper_t const& rhs) noexcept {
+    return lhs.x != rhs.x;
+  }
+  friend constexpr bool operator<(my_non_trivial_int_wrapper_t const& lhs, my_non_trivial_int_wrapper_t const& rhs) noexcept {
+    return lhs.x < rhs.x;
+  }
+  friend constexpr bool operator<=(my_non_trivial_int_wrapper_t const& lhs,
+                                   my_non_trivial_int_wrapper_t const& rhs) noexcept {
+    return lhs.x <= rhs.x;
+  }
+  friend constexpr bool operator>(my_non_trivial_int_wrapper_t const& lhs, my_non_trivial_int_wrapper_t const& rhs) noexcept {
+    return lhs.x > rhs.x;
+  }
+  friend constexpr bool operator>=(my_non_trivial_int_wrapper_t const& lhs,
+                                   my_non_trivial_int_wrapper_t const& rhs) noexcept {
+    return lhs.x >= rhs.x;
+  }
+  int x;
+};
+
+TEST(my, simple_oper_eq_test) {
+  using variant1 = variant<my_non_trivial_int_wrapper_t, int, std::string>;
+  auto val = 15;
+  variant1 v1(in_place_index<0>, val);
+  variant1 v2(in_place_index<0>, 15);
+
+  ASSERT_TRUE(v1 == v2);
+  ASSERT_FALSE(v1 == variant1());
+}
+
+TEST(my, oper_eq_test) {
+  using variant1 = variant<my_non_trivial_int_wrapper_t, int, float>;
+  auto val = 15;
+  variant1 v1(in_place_index<0>, val);
+  variant1 v2(in_place_index<0>, 15);
+
+  ASSERT_TRUE(my_test_equal(v1, v2, true));
+  ASSERT_TRUE(my_test_equal(v1, variant1(), false));
+}
+
+TEST(relops, my_equality) {
+  using V = variant<non_trivial_int_wrapper_t, int, float>;
+  {
+    V v1(in_place_index<0>, 42);
+    V v2(in_place_index<0>, 42);
+    ASSERT_TRUE(my_test_equal(v1, v2, true));
+  }
+  {
+    V v1(in_place_index<0>, 42);
+    V v2(in_place_index<0>, 43);
+    ASSERT_TRUE(my_test_equal(v1, v2, false));
+  }
+  {
+    V v1(in_place_index<0>, 42);
+    V v2(in_place_index<1>, 42);
+    ASSERT_TRUE(my_test_equal(v1, v2, false));
+  }
 }
 
 // struct abc
@@ -451,14 +550,14 @@ TEST(correctness, visit) {
 //  FAIL();
 //}
 
- constexpr bool get_if_test_basic() {
-  variant<float, double, long double> v = 4.5;
-  if (!get_if<double>(&v))
-    return false;
-  return true;
-}
-
- static_assert(get_if_test_basic(), "Bad get_if behavior");
+// constexpr bool get_if_test_basic() {
+//  variant<float, double, long double> v = 4.5;
+//  if (!get_if<double>(&v))
+//    return false;
+//  return true;
+//}
+//
+// static_assert(get_if_test_basic(), "Bad get_if behavior");
 
 // TEST(correctness, multiple_same_types) {
 //  variant<int, const int, int const, volatile int const> v;
@@ -571,21 +670,21 @@ TEST(visits, visit_overload) {
   ASSERT_TRUE(visit(visitor, v));
 }
 
-constexpr bool test_visit() {
-  using V = variant<int, short, long>;
-  V a1(1);
-  V b1(2);
-  V c1(3);
-  bool res1 = (visit(sqr_sum_visitor{}, a1, b1, c1) == 14);
-
-  V a2(in_place_index<0>, 2);
-  V b2(in_place_index<1>, 2);
-  V c2(in_place_index<2>, 2);
-  bool res2 = (visit(sqr_sum_visitor{}, a2, b2, c2) == 12);
-  return res1 && res2;
-}
-
-static_assert(test_visit(), "Visit is not constexpr");
+//constexpr bool test_visit() {
+//  using V = variant<int, short, long>;
+//  V a1(1);
+//  V b1(2);
+//  V c1(3);
+//  bool res1 = (visit(sqr_sum_visitor{}, a1, b1, c1) == 14);
+//
+//  V a2(in_place_index<0>, 2);
+//  V b2(in_place_index<1>, 2);
+//  V c2(in_place_index<2>, 2);
+//  bool res2 = (visit(sqr_sum_visitor{}, a2, b2, c2) == 12);
+//  return res1 && res2;
+//}
+//
+//static_assert(test_visit(), "Visit is not constexpr");
 
 TEST(visits, visit_visitor_forwarding) {
   variant<int> var = 322;
@@ -704,31 +803,31 @@ TEST(visits, visit_args_forwarding) {
 //  ASSERT_FALSE(get<0>(a).has_coin());
 //}
 //
-// template <class Var>
-// constexpr bool test_equal(const Var& l, const Var& r, bool expect_equal) {
-//  return ((l == r) == expect_equal) && (!(l != r) == expect_equal) && ((r == l) == expect_equal) &&
-//         (!(r != l) == expect_equal);
-//}
-//
-// TEST(relops, equality) {
-//  using V = variant<non_trivial_int_wrapper_t, int, std::string>;
-//  {
-//    V v1(in_place_index<0>, 42);
-//    V v2(in_place_index<0>, 42);
-//    ASSERT_TRUE(test_equal(v1, v2, true));
-//  }
-//  {
-//    V v1(in_place_index<0>, 42);
-//    V v2(in_place_index<0>, 43);
-//    ASSERT_TRUE(test_equal(v1, v2, false));
-//  }
-//  {
-//    V v1(in_place_index<0>, 42);
-//    V v2(in_place_index<1>, 42);
-//    ASSERT_TRUE(test_equal(v1, v2, false));
-//  }
-//}
-//
+ template <class Var>
+ constexpr bool test_equal(const Var& l, const Var& r, bool expect_equal) {
+  return ((l == r) == expect_equal) && (!(l != r) == expect_equal) && ((r == l) == expect_equal) &&
+         (!(r != l) == expect_equal);
+}
+
+ TEST(relops, equality) {
+  using V = variant<non_trivial_int_wrapper_t, int, std::string>;
+  {
+    V v1(in_place_index<0>, 42);
+    V v2(in_place_index<0>, 42);
+    ASSERT_TRUE(test_equal(v1, v2, true));
+  }
+  {
+    V v1(in_place_index<0>, 42);
+    V v2(in_place_index<0>, 43);
+    ASSERT_TRUE(test_equal(v1, v2, false));
+  }
+  {
+    V v1(in_place_index<0>, 42);
+    V v2(in_place_index<1>, 42);
+    ASSERT_TRUE(test_equal(v1, v2, false));
+  }
+}
+
 // template <class Var>
 // constexpr bool test_less(const Var& l, const Var& r, bool expect_less, bool expect_greater) {
 //  return ((l < r) == expect_less) && (!(l >= r) == expect_less) && ((l > r) == expect_greater) &&

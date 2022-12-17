@@ -5,8 +5,11 @@
 
 #include "details.h"
 
+template <bool is_trivially_destructible, typename... Types>
+union multi_union_t_ {};
+
 template <typename... Types>
-union multi_union_t {};
+using multi_union_t = multi_union_t_<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
 
 ///==================================================================================================================///
 /// multi_union_helper_t
@@ -102,20 +105,39 @@ struct multi_union_helper_t {
 /// multi_union_t
 
 template <typename First, typename... Rest_Types>
-union multi_union_t<First, Rest_Types...> {
+union multi_union_t_<false, First, Rest_Types...> {
+  First first;
+  multi_union_t<Rest_Types...> rest;
+  char for_trivial_initialization = 0;
+  constexpr multi_union_t_() : for_trivial_initialization(0) {}
+  //  constexpr multi_union_t() : for_trivial_initialization(0) {}
+//
+  template <typename... Args>
+  constexpr explicit multi_union_t_(in_place_index_t<0>, Args&&... args) : first(std::forward<Args>(args)...) {}
+
+  template <size_t N, typename... Args>
+  constexpr explicit multi_union_t_(in_place_index_t<N>, Args&&... args)
+      : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
+
+  ~multi_union_t_() {}
+};
+
+template <typename First, typename... Rest_Types>
+union multi_union_t_<true, First, Rest_Types...> {
   First first;
   multi_union_t<Rest_Types...> rest;
   char for_trivial_initialization;
-  constexpr multi_union_t() : for_trivial_initialization(0) {}
+  constexpr multi_union_t_() : for_trivial_initialization(0) {}
 
   template <typename... Args>
-  constexpr explicit multi_union_t(in_place_index_t<0>, Args&&... args) : first(std::forward<Args>(args)...) {}
+  constexpr explicit multi_union_t_(in_place_index_t<0>, Args&&... args) : first(std::forward<Args>(args)...) {}
 
   template <size_t N, typename... Args>
-  constexpr explicit multi_union_t(in_place_index_t<N>, Args&&... args)
+  constexpr explicit multi_union_t_(in_place_index_t<N>, Args&&... args)
       : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
 
-  ~multi_union_t() = default;
+
+  ~multi_union_t_() = default;
 };
 
 /// END: multi_union_t
