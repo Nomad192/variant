@@ -41,7 +41,7 @@ struct multi_union_helper_t {
   template <size_t Index, typename... Args>
   constexpr static void only_set(multi_union_t<First, Rest...>& mu, Args&&... args) {
     if constexpr (sizeof...(Rest) == 0 || Index == 0)
-      new (std::addressof(mu.first)) First(std::forward<Args>(args)...);
+      new (std::remove_const_t<void*>(std::addressof(mu.first))) First(std::forward<Args>(args)...);
     else if constexpr (sizeof...(Rest) > 0)
       multi_union_helper_t<Rest...>::template only_set<Index - 1, Args...>(mu.rest, std::forward<Args>(args)...);
   }
@@ -49,7 +49,7 @@ struct multi_union_helper_t {
   template <typename Other_Variant>
   constexpr static void construct_from_other(size_t ind, Other_Variant&& from, multi_union_t<First, Rest...>& to) {
     if(ind == 0 || sizeof...(Rest) == 0)
-      new (std::addressof(to.first)) First(std::forward<Other_Variant>(from).first);
+      new (std::remove_const_t<void*>(std::addressof(to.first))) First(std::forward<Other_Variant>(from).first);
     else if constexpr (sizeof...(Rest) > 0)
       multi_union_helper_t<Rest...>::template construct_from_other(ind - 1, from.rest, to.rest);
   }

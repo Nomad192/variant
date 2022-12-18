@@ -6,7 +6,10 @@ template <typename First, typename... Rest>
 struct variant;
 
 ///==================================================================================================================///
-/// https://en.cppreference.com/ Moment
+/// https://cppreference.com Moment
+
+inline constexpr std::size_t variant_npos = -1;
+
 ///==================================================================================================================///
 /// in_place
 

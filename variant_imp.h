@@ -71,8 +71,8 @@ public:
 //      new (std::addressof(storage.first)) First(other.storage.first);
 //    }
 
-    current_index = -1;
-    if(other.index() != -1) {
+    current_index = variant_npos;
+    if(other.index() != variant_npos) {
       mu_help::template construct_from_other(other.index(), other.storage, this->storage);
       current_index = other.index();
     }
@@ -87,8 +87,8 @@ public:
   constexpr variant(variant&& other) requires(trivially_move_constructible<First, Rest...>) = default;
 
   constexpr variant(variant&& other) {
-    current_index = -1;
-    if(other.index() != -1) {
+    current_index = variant_npos;
+    if(other.index() != variant_npos) {
       mu_help::template construct_from_other(other.index(), std::move(other.storage), this->storage);
       current_index = other.index();
     }
@@ -132,10 +132,15 @@ public:
     return current_index;
   }
 
+  constexpr bool valueless_by_exception() const noexcept
+  {
+    return current_index == variant_npos;
+  }
+
   template <typename T>
   void emplace(T x)
   {
-    current_index = -1;
+    current_index = variant_npos;
     mu_help::template set<get_index_by_type<T, First, Rest...>::index, T>(index(), storage, std::forward<T>(x));
     current_index = get_index_by_type<T, First, Rest...>::index;
   }
@@ -143,7 +148,7 @@ public:
   template <size_t Index, typename T>
   void emplace(T x)
   {
-    current_index = -1;
+    current_index = variant_npos;
     mu_help::template set<Index, T>(index(), storage, std::forward<T>(x));
     current_index = Index;
   }
@@ -184,7 +189,7 @@ public:
   /// get_if_from_index
 
   template <std::size_t Index>
-  constexpr std::add_pointer_t<std::variant_alternative_t<Index, std::variant<First, Rest...>>>
+  constexpr std::add_pointer_t<variant_alternative_t<Index, variant<First, Rest...>>>
   get_if_from_index() noexcept {
     if (Index != index())
       return nullptr;
@@ -192,7 +197,7 @@ public:
   }
 
   template <std::size_t Index>
-  constexpr std::add_pointer_t<const std::variant_alternative_t<Index, std::variant<First, Rest...>>>
+  constexpr std::add_pointer_t<const variant_alternative_t<Index, variant<First, Rest...>>>
   get_if_from_index() const noexcept {
     if (Index != index())
       return nullptr;
