@@ -505,7 +505,7 @@ TEST(visits, visit_valueless) {
     x.emplace<throwing_move_operator_t>(throwing_move_operator_t{});
   } catch (std::exception const& item) {
     ASSERT_TRUE(x.valueless_by_exception());
-    auto visitor = [](auto&& x) {};
+    auto visitor = [](auto&& ) {};
     ASSERT_THROW(visit(visitor, x), bad_variant_access);
     return;
   }
@@ -617,15 +617,15 @@ TEST(visits, visit_args_forwarding) {
 //  ASSERT_EQ(get<std::string>(a), "kek");
 //  ASSERT_EQ(get<int>(c), 42);
 //}
-//
-//TEST(assignment, same_alternative) {
-//  using V = variant<non_trivial_int_wrapper_t, non_trivial_copy_assignment_t>;
-//  V a(in_place_type<non_trivial_copy_assignment_t>, 42);
-//  V b(in_place_type<non_trivial_copy_assignment_t>, 14882);
-//  a = b;
-//  ASSERT_EQ(get<1>(a).x, 14882 + non_trivial_copy_assignment_t::DELTA);
-//}
-//
+
+TEST(assignment, same_alternative) {
+  using V = variant<non_trivial_int_wrapper_t, non_trivial_copy_assignment_t>;
+  V a(in_place_type<non_trivial_copy_assignment_t>, 42);
+  V b(in_place_type<non_trivial_copy_assignment_t>, 14882);
+  a = b;
+  ASSERT_EQ(get<1>(a).x, 14882 + non_trivial_copy_assignment_t::DELTA);
+}
+
 //TEST(assignment, back_and_forth) {
 //  using V = variant<non_trivial_int_wrapper_t, non_trivial_copy_assignment_t>;
 //  V a = non_trivial_int_wrapper_t(42);
@@ -640,25 +640,25 @@ TEST(visits, visit_args_forwarding) {
 //  a = b;
 //  ASSERT_EQ(get<1>(a).x, 52);
 //}
-//
-//TEST(assignment, move_only) {
-//  only_movable::move_assignment_called = 0;
-//  using V = variant<only_movable>;
-//  V a(in_place_type<only_movable>);
-//  V b(in_place_type<only_movable>);
-//  a = std::move(b);
-//  ASSERT_TRUE(get<0>(a).has_coin());
-//  ASSERT_FALSE(get<0>(b).has_coin());
-//  ASSERT_EQ(only_movable::move_assignment_called, 1);
-//}
-//
-//TEST(assignment, different_alternatives) {
-//  using V = variant<std::vector<int>, std::vector<double>>;
-//  V a = std::vector{13.37, 2020.02};
-//  V b = std::vector{1337, 14882};
-//  a = b;
-//  ASSERT_TRUE(holds_alternative<std::vector<int>>(a));
-//}
+
+TEST(assignment, move_only) {
+  only_movable::move_assignment_called = 0;
+  using V = variant<only_movable>;
+  V a(in_place_type<only_movable>);
+  V b(in_place_type<only_movable>);
+  a = std::move(b);
+  ASSERT_TRUE(get<0>(a).has_coin());
+  ASSERT_FALSE(get<0>(b).has_coin());
+  ASSERT_EQ(only_movable::move_assignment_called, 1);
+}
+
+TEST(assignment, different_alternatives) {
+  using V = variant<std::vector<int>, std::vector<double>>;
+  V a = std::vector{13.37, 2020.02};
+  V b = std::vector{1337, 14882};
+  a = b;
+  ASSERT_TRUE(holds_alternative<std::vector<int>>(a));
+}
 
 TEST(constructor, move_only) {
   using V = variant<only_movable>;
