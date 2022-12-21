@@ -5,8 +5,7 @@
 ///==================================================================================================================///
 /// variant
 
-namespace visit_helper
-{
+namespace visit_helper {
 template <typename Visitor, typename... Variants>
 constexpr auto do_visit(Visitor&& visitor, Variants&&... variants);
 }
@@ -16,7 +15,6 @@ concept trivially_copy_constructible = std::conjunction_v<std::is_trivially_copy
 
 template <typename... Types>
 concept trivially_move_constructible = std::conjunction_v<std::is_trivially_move_constructible<Types>...>;
-
 
 template <typename First, typename... Rest>
 struct variant {
@@ -37,8 +35,7 @@ public:
             //                                     typename get_type_by_index<N, First, Rest...>::type,
             //                                     Args...>>
             >
-  constexpr variant(in_place_index_t<N>, Args&&... args)
-      : storage(in_place_index<N>, std::forward<Args>(args)...) {
+  constexpr variant(in_place_index_t<N>, Args&&... args) : storage(in_place_index<N>, std::forward<Args>(args)...) {
     // storage_t<First, Rest...>::template set<N, Args...>(storage, std::forward<Args>(args)...);
   }
   template <typename T, typename... Args
@@ -55,102 +52,113 @@ public:
   template <typename T>
   constexpr variant(T x) : variant(in_place_type<T>, std::forward<T>(x)) {}
 
-
   constexpr variant(const variant& other) requires(trivially_copy_constructible<First, Rest...>) = default;
-//
-//  struct visiter
-//  {
-//    template <typename Arg>
-//    void operator()(Arg&& other_val)
-//    {
-//      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage, other_val);
-//    }
-//  };
-//
+  //
+  //  struct visiter
+  //  {
+  //    template <typename Arg>
+  //    void operator()(Arg&& other_val)
+  //    {
+  //      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First,
+  //      Rest...>::index>(storage, other_val);
+  //    }
+  //  };
+  //
 
-  constexpr variant(const variant& other)
-  {
-//    if constexpr (other.index() == 0)
-//    {
-//      new (std::addressof(storage.first)) First(other.storage.first);
-//    }
+  constexpr variant(const variant& other) {
+    //    if constexpr (other.index() == 0)
+    //    {
+    //      new (std::addressof(storage.first)) First(other.storage.first);
+    //    }
 
     storage.index = variant_npos;
-    if(other.index() != variant_npos) {
+    if (other.index() != variant_npos) {
       mu_help::template construct_from_other(other.index(), other.storage.value, this->storage.value);
       storage.index = other.index();
     }
 
-      ///wtf aaaaaaaaaaaaaaaaaaaaaa
-//    visit([&](auto other_val) -> void {
-//      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage, other_val);
-//      st.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
-//    }, other);
+    /// wtf aaaaaaaaaaaaaaaaaaaaaa
+    //    visit([&](auto other_val) -> void {
+    //      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First,
+    //      Rest...>::index>(storage, other_val); st.index = get_index_by_type<decltype(other_val), First,
+    //      Rest...>::index;
+    //    }, other);
   }
 
   constexpr variant(variant&& other) requires(trivially_move_constructible<First, Rest...>) = default;
 
   constexpr variant(variant&& other) {
     storage.index = variant_npos;
-    if(other.index() != variant_npos) {
+    if (other.index() != variant_npos) {
       mu_help::template construct_from_other(other.index(), std::move(other.storage.value), this->storage.value);
       storage.index = other.index();
     }
   }
-    //    auto stored = visit([](auto& stored) {
-    //      return stored;
-    //    }, other);
-    //
-    //    visit(
-    //        [](auto&& arg) {
-    //          using T = std::decay_t<decltype(arg)>;
-    //          if constexpr (std::is_same_v<T, int>)
-    //            std::cout << "int with value " << arg << '\n';
-    //          else if constexpr (std::is_same_v<T, float>)
-    //            std::cout << "long with value " << arg << '\n';
-    //          else if constexpr (std::is_same_v<T, double>)
-    //            std::cout << "double with value " << arg << '\n';
-    //          ;
-    //        },
-    //        other);
 
-    //    st.index = get_index_by_type<decltype(stored)>::index;
-    //    std::cout << "ok " << stored << " " << st.index << std::endl;
-  //}
-  //      noexcept(std::conjunction_v<std::is_nothrow_move_constructible<Rest>...,
-  //                                                           std::is_nothrow_move_constructible<First>>)
-  //= delete;
   variant& operator=(const variant& other) {
-    if(index() == other.index())
-      visit_helper::do_visit([&](auto other_val) -> void {
-        multi_union_helper_t<First, Rest...>::template operator_set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value, other_val);
-        storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
-      }, other);
-    else
-      visit_helper::do_visit([&](auto other_val) -> void {
-        multi_union_helper_t<First, Rest...>::template set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value, other_val);
-        storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
-      }, other);
+    if (this == &other)
+      return *this;
+
+    try {
+      if (index() == other.index())
+        visit_helper::do_visit(
+            [&](auto other_val) -> void {
+              multi_union_helper_t<First, Rest...>::template operator_set<
+                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value,
+                                                                                 other_val);
+              storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
+            },
+            other);
+      else
+        visit_helper::do_visit(
+            [&](auto other_val) -> void {
+              multi_union_helper_t<First, Rest...>::template set<
+                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value,
+                                                                                 other_val);
+              storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
+            },
+            other);
+    } catch (...) {
+      storage.index = variant_npos;
+      throw;
+    }
+
     return *this;
   }
 
   variant& operator=(variant&& other)
-      //      noexcept(
-      //      std::conjunction_v<std::is_nothrow_move_assignable<Rest>...,
-      //      std::is_nothrow_move_assignable<First>>&&
-      //          std::conjunction_v<std::is_nothrow_move_constructible<Rest>...,
-      //                             std::is_nothrow_move_constructible<First>>)
+  //      noexcept(
+  //      std::conjunction_v<std::is_nothrow_move_assignable<Rest>...,
+  //      std::is_nothrow_move_assignable<First>>&&
+  //          std::conjunction_v<std::is_nothrow_move_constructible<Rest>...,
+  //                             std::is_nothrow_move_constructible<First>>)
   {
-    if(index() == other.index())
-      visit_helper::do_visit([&](auto other_val) -> void {
-        multi_union_helper_t<First, Rest...>::template operator_set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value, std::move(other_val));
-        storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
-      }, std::move(other));
-    else
-      visit_helper::do_visit([&](auto other_val) -> void {
-        multi_union_helper_t<First, Rest...>::template set<get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value, std::move(other_val));
-        storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
-      }, std::move(other));
+    if (this == &other)
+      return *this;
+
+    try {
+      if (index() == other.index())
+        visit_helper::do_visit(
+            [&](auto other_val) -> void {
+              multi_union_helper_t<First, Rest...>::template operator_set<
+                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value,
+                                                                                 std::move(other_val));
+              storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
+            },
+            std::move(other));
+      else
+        visit_helper::do_visit(
+            [&](auto other_val) -> void {
+              multi_union_helper_t<First, Rest...>::template set<
+                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value,
+                                                                                 std::move(other_val));
+              storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
+            },
+            std::move(other));
+    } catch (...) {
+      storage.index = variant_npos;
+      throw;
+    }
 
     return *this;
   }
@@ -159,9 +167,7 @@ public:
   variant& operator=(T x) {
     try {
       mu_help::template set<get_index_by_type<T, First, Rest...>::index, T>(index(), storage.value, std::forward<T>(x));
-    }
-    catch (...)
-    {
+    } catch (...) {
       storage.index = variant_npos;
       throw;
     }
@@ -177,19 +183,15 @@ public:
     return storage.index;
   }
 
-  constexpr bool valueless_by_exception() const noexcept
-  {
+  constexpr bool valueless_by_exception() const noexcept {
     return storage.index == variant_npos;
   }
 
   template <typename T>
-  void emplace(T x)
-  {
+  void emplace(T x) {
     try {
       mu_help::template set<get_index_by_type<T, First, Rest...>::index, T>(index(), storage.value, std::forward<T>(x));
-    }
-    catch (...)
-    {
+    } catch (...) {
       storage.index = variant_npos;
       throw;
     }
@@ -197,13 +199,10 @@ public:
   }
 
   template <size_t Index, typename T>
-  void emplace(T x)
-  {
+  void emplace(T x) {
     try {
       mu_help::template set<Index, T>(index(), storage.value, std::forward<T>(x));
-    }
-    catch (...)
-    {
+    } catch (...) {
       storage.index = variant_npos;
       throw;
     }
@@ -246,8 +245,7 @@ public:
   /// get_if_from_index
 
   template <std::size_t Index>
-  constexpr std::add_pointer_t<variant_alternative_t<Index, variant<First, Rest...>>>
-  get_if_from_index() noexcept {
+  constexpr std::add_pointer_t<variant_alternative_t<Index, variant<First, Rest...>>> get_if_from_index() noexcept {
     if (Index != index())
       return nullptr;
     return std::addressof(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage.value));
