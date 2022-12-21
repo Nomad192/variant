@@ -160,53 +160,45 @@ union multi_union_t_<true, First, Rest_Types...> {
   ~multi_union_t_() = default;
 };
 
+/// END: multi_union_t
+///==================================================================================================================///
+/// storage_t
+
 template <bool is_trivially_destructible, typename... Types>
-struct destructible_storage_t_ {};
+struct storage_t_ {};
 
 template <typename... Types>
-using destructible_storage_t = destructible_storage_t_<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
+using storage_t = storage_t_<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
 
 template <typename... Types>
-struct destructible_storage_t_<true, Types...> {
+struct storage_t_<true, Types...> {
   size_t index = 0;
   multi_union_t<Types...> value;
 
-  constexpr destructible_storage_t_() = default;
+  constexpr storage_t_() = default;
 
   template <size_t N, typename... Args>
-  constexpr destructible_storage_t_(size_t ind, in_place_index_t<N>, Args&&... args)
-      : index(ind), value(in_place_index<N>, std::forward<Args>(args)...) {}
+  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
+      : index(N), value(in_place_index<N>, std::forward<Args>(args)...) {}
 
-  ~destructible_storage_t_() = default;
+  ~storage_t_() = default;
 };
 
 template <typename... Types>
-struct destructible_storage_t_<false, Types...> {
+struct storage_t_<false, Types...> {
   size_t index = 0;
   multi_union_t<Types...> value;
 
-  constexpr destructible_storage_t_() = default;
+  constexpr storage_t_() = default;
 
   template <size_t N, typename... Args>
-  constexpr destructible_storage_t_(size_t ind, in_place_index_t<N>, Args&&... args)
-      : index(ind), value(in_place_index<N>, std::forward<Args>(args)...) {}
+  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
+      : index(N), value(in_place_index<N>, std::forward<Args>(args)...) {}
 
-  ~destructible_storage_t_() {
+  ~storage_t_() {
     multi_union_helper_t<Types...>::template reset<0>(index, value);
   };
 };
 
-template <typename... Types>
-struct storage_t : destructible_storage_t<Types...>
-{
-  //using destructible_storage_t<Types...>::destructible_storage_t;
-
-  constexpr storage_t() {}
-
-  template <size_t N, typename... Args>
-  constexpr storage_t(size_t ind, in_place_index_t<N>, Args&&... args)
-      : destructible_storage_t<Types...>(ind, in_place_index<N>, std::forward<Args>(args)...) {}
-};
-
-/// END: multi_union_t
+/// END: storage_t
 ///==================================================================================================================///
