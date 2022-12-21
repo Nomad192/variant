@@ -693,50 +693,50 @@ TEST(relops, equality) {
   }
 }
 
-//template <class Var>
-//constexpr bool test_less(const Var& l, const Var& r, bool expect_less, bool expect_greater) {
-//  return ((l < r) == expect_less) && (!(l >= r) == expect_less) && ((l > r) == expect_greater) &&
-//         (!(l <= r) == expect_greater);
-//}
-//
-//TEST(relops, relational_basic) {
-//  using V = variant<non_trivial_int_wrapper_t, int, std::string>;
-//  {
-//    V v1(in_place_index<0>, 42);
-//    V v2(in_place_index<0>, 42);
-//    ASSERT_TRUE(test_less(v1, v2, false, false));
-//    ASSERT_TRUE(test_less(v2, v1, false, false));
-//  }
-//  {
-//    V v1(in_place_index<0>, 42);
-//    V v2(in_place_index<0>, 43);
-//    ASSERT_TRUE(test_less(v1, v2, true, false));
-//    ASSERT_TRUE(test_less(v2, v1, false, true));
-//  }
-//  {
-//    V v1(in_place_index<0>, 43);
-//    V v2(in_place_index<1>, 42);
-//    ASSERT_TRUE(test_less(v1, v2, true, false));
-//    ASSERT_TRUE(test_less(v2, v1, false, true));
-//  }
-//}
-//
-//TEST(relops, relational_empty) {
-//  using V = variant<int, empty_comparable, std::string>;
-//  {
-//    V v1, v2;
-//    ASSERT_ANY_THROW(v2 = V(in_place_type<empty_comparable>));
-//    ASSERT_TRUE(v2.valueless_by_exception());
-//    ASSERT_TRUE(test_less(v1, v2, false, true));
-//    ASSERT_TRUE(test_less(v2, v1, true, false));
-//  }
-//  {
-//    V v1, v2;
-//    ASSERT_ANY_THROW(v1 = V(in_place_type<empty_comparable>));
-//    ASSERT_TRUE(v1.valueless_by_exception());
-//    ASSERT_ANY_THROW(v2 = V(in_place_type<empty_comparable>));
-//    ASSERT_TRUE(v2.valueless_by_exception());
-//    ASSERT_TRUE(test_less(v1, v2, false, false));
-//    ASSERT_TRUE(test_less(v2, v1, false, false));
-//  }
-//}
+template <class Var>
+constexpr bool test_less(const Var& l, const Var& r, bool expect_less, bool expect_greater) {
+  return ((l < r) == expect_less) && (!(l >= r) == expect_less) && ((l > r) == expect_greater) &&
+         (!(l <= r) == expect_greater);
+}
+
+TEST(relops, relational_basic) {
+  using V = variant<non_trivial_int_wrapper_t, int, std::string>;
+  {
+    V v1(in_place_index<0>, 42);
+    V v2(in_place_index<0>, 42);
+    ASSERT_TRUE(test_less(v1, v2, false, false));
+    ASSERT_TRUE(test_less(v2, v1, false, false));
+  }
+  {
+    V v1(in_place_index<0>, 42);
+    V v2(in_place_index<0>, 43);
+    ASSERT_TRUE(test_less(v1, v2, true, false));
+    ASSERT_TRUE(test_less(v2, v1, false, true));
+  }
+  {
+    V v1(in_place_index<0>, 43);
+    V v2(in_place_index<1>, 42);
+    ASSERT_TRUE(test_less(v1, v2, true, false));
+    ASSERT_TRUE(test_less(v2, v1, false, true));
+  }
+}
+
+TEST(relops, relational_empty) {
+  using V = variant<int, empty_comparable, std::string>;
+  {
+    V v1, v2;
+    ASSERT_ANY_THROW(v2 = V(in_place_type<empty_comparable>));
+    ASSERT_TRUE(v2.valueless_by_exception());
+    ASSERT_TRUE(test_less(v1, v2, false, true));
+    ASSERT_TRUE(test_less(v2, v1, true, false));
+  }
+  {
+    V v1, v2;
+    ASSERT_ANY_THROW(v1 = V(in_place_type<empty_comparable>));
+    ASSERT_TRUE(v1.valueless_by_exception());
+    ASSERT_ANY_THROW(v2 = V(in_place_type<empty_comparable>));
+    ASSERT_TRUE(v2.valueless_by_exception());
+    ASSERT_TRUE(test_less(v1, v2, false, false));
+    ASSERT_TRUE(test_less(v2, v1, false, false));
+  }
+}
