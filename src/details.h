@@ -111,42 +111,49 @@ private:
 /// END: Standard Moment
 ///==================================================================================================================///
 /// My Helper
+///==================================================================================================================///
+/// get_index_by_type
 
 template <size_t N, typename T, typename... Rest>
-struct get_index_by_type_t {
-  static const size_t index = -1;
+struct get_index_by_type_ {
+  static constexpr size_t index = -1;
 };
 
 template <size_t N, typename T, typename First, typename... Rest>
-struct get_index_by_type_t<N, T, First, Rest...> {
-  static const size_t index = std::is_same_v<T, First> ? N : get_index_by_type_t<N + 1, T, Rest...>::index;
+struct get_index_by_type_<N, T, First, Rest...> {
+  static constexpr size_t index = std::is_same_v<T, First> ? N : get_index_by_type_<N + 1, T, Rest...>::index;
 };
 
 template <typename T, typename... Types>
-using get_index_by_type = get_index_by_type_t<0, T, Types...>;
+using get_index_by_type = get_index_by_type_<0, T, Types...>;
 
-///==================================================================================================================///
-/// in_copy_index_t
-
-template <std::size_t I>
-struct in_copy_index_t {
-  explicit in_copy_index_t() = default;
-};
-template <std::size_t I>
-inline constexpr in_copy_index_t<I> in_copy_index{};
-
-/// END: in_copy_index_t
+/// END: get_index_by_type
 ///------------------------------------------------------///
-/// in_move_index_t
+/// get_type_by_construct_type
 
-template <std::size_t I>
-struct in_move_index_t {
-  explicit in_move_index_t() = default;
+template <typename T, typename Stored_Type>
+concept construct = requires(T&& t)
+{
+  Stored_Type{std::forward<T>(t)};
 };
-template <std::size_t I>
-inline constexpr in_move_index_t<I> in_move_index{};
 
-/// END: in_move_index_t
+struct invalid_type{};
+
+template <typename T, typename... Types>
+struct get_type_by_construct_type_{
+  static constexpr void type() requires(false) { return; }
+};
+
+template <typename T, typename First, typename... Rest>
+struct get_type_by_construct_type_<T, First, Rest...> : get_type_by_construct_type_<T, Rest...> {
+  using get_type_by_construct_type_<T, Rest...>::type;
+  static constexpr First type() requires(construct<T, First) { return{}; }
+};
+
+template <typename T, typename... Types>
+using get_type_by_construct_type = get_type_by_construct_type_<T, Types...>;
+
+/// END: get_type_by_construct_type
 ///==================================================================================================================///
 /// END: My Helper
 ///==================================================================================================================///

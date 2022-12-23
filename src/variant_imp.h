@@ -166,18 +166,24 @@ public:
   template <typename T, typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>>
   variant& operator=(T x) {
     try {
-      mu_help::template
-          set<
-              get_index_by_type<T
-              //decltype(get_index_by_type<get_type_by_construct_type<T, First, Rest...>::type())
-              , First
-              , Rest...>::index, T>(index(), storage.value, std::forward<T>(x));
-
+      if (index() ==
+          get_index_by_type<decltype(get_type_by_construct_type<T, First, Rest...>::type()), First, Rest...>::index) {
+        mu_help::template operator_set<
+            get_index_by_type<decltype(get_type_by_construct_type<T, First, Rest...>::type()), First, Rest...>::index,
+            T>(index(), storage.value, std::forward<T>(x));
+      } else {
+        mu_help::template set<
+            get_index_by_type<
+                // T
+                decltype(get_type_by_construct_type<T, First, Rest...>::type()), First, Rest...>::index,
+            T>(index(), storage.value, std::forward<T>(x));
+      }
     } catch (...) {
       storage.index = variant_npos;
       throw;
     }
-    storage.index = get_index_by_type<T, First, Rest...>::index;
+    storage.index =
+        get_index_by_type<decltype(get_type_by_construct_type<T, First, Rest...>::type()), First, Rest...>::index;
 
     return *this;
   }
@@ -294,30 +300,6 @@ public:
       *this = std::move(buffer);
     }
   }
-
-//  constexpr void swap(variant& other) {
-//    if (this == &other)
-//      return;
-//
-//    if (index() == other.index()) {
-//      if (!this->valueless_by_exception()) {
-//        visit_helper::do_visit(
-//            [&](auto&& a, auto&& b) {
-//              using std::swap;
-//              if constexpr (std::is_same_v<decltype(a), decltype(b)>)
-//                swap(a, b);
-//            },
-//            *this, other);
-//        std::swap(storage.index, other.storage.index);
-//      }
-//      return;
-//    } else {
-//      // std::swap(*this, other);
-////      variant<First, Rest...> buffer = *this;
-////      *this = other;
-////      other = buffer;
-//    }
-//  }
 };
 
 /// END: variant
