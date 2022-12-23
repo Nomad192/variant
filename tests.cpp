@@ -576,33 +576,33 @@ TEST(visits, visit_args_forwarding) {
   ASSERT_EQ(val4, 322);
 }
 
-//TEST(swap, valueless) {
-//  throwing_move_operator_t::swap_called = 0;
-//  using V = variant<int, throwing_move_operator_t>;
-//  V a = 14;
-//  V b = 88;
-//  ASSERT_ANY_THROW({
-//    V tmp(in_place_index<1>);
-//    a = std::move(tmp);
-//  });
-//  ASSERT_ANY_THROW({
-//    V tmp(in_place_index<1>);
-//    b = std::move(tmp);
-//  });
-//  ASSERT_TRUE(a.valueless_by_exception());
-//  ASSERT_TRUE(b.valueless_by_exception());
-//  a.swap(b);
-//  ASSERT_EQ(throwing_move_operator_t::swap_called, 0);
-//}
-//
-//TEST(swap, same_alternative) {
-//  throwing_move_operator_t::swap_called = 0;
-//  using V = variant<int, throwing_move_operator_t>;
-//  V a(in_place_index<1>);
-//  V b(in_place_index<1>);
-//  a.swap(b);
-//  ASSERT_EQ(throwing_move_operator_t::swap_called, 1);
-//}
+TEST(swap, valueless) {
+  throwing_move_operator_t::swap_called = 0;
+  using V = variant<int, throwing_move_operator_t>;
+  V a = 14;
+  V b = 88;
+  ASSERT_ANY_THROW({
+    V tmp(in_place_index<1>);
+    a = std::move(tmp);
+  });
+  ASSERT_ANY_THROW({
+    V tmp(in_place_index<1>);
+    b = std::move(tmp);
+  });
+  ASSERT_TRUE(a.valueless_by_exception());
+  ASSERT_TRUE(b.valueless_by_exception());
+  a.swap(b);
+  ASSERT_EQ(throwing_move_operator_t::swap_called, 0);
+}
+
+TEST(swap, same_alternative) {
+  throwing_move_operator_t::swap_called = 0;
+  using V = variant<int, throwing_move_operator_t>;
+  V a(in_place_index<1>);
+  V b(in_place_index<1>);
+  a.swap(b);
+  ASSERT_EQ(throwing_move_operator_t::swap_called, 1);
+}
 //
 //TEST(swap, different_alternatives) {
 //  using V = variant<int, std::string, trivial_t>;
@@ -626,20 +626,20 @@ TEST(assignment, same_alternative) {
   ASSERT_EQ(get<1>(a).x, 14882 + non_trivial_copy_assignment_t::DELTA);
 }
 
-//TEST(assignment, back_and_forth) {
-//  using V = variant<non_trivial_int_wrapper_t, non_trivial_copy_assignment_t>;
-//  V a = non_trivial_int_wrapper_t(42);
-//  V b = non_trivial_copy_assignment_t(14882);
-//  ASSERT_EQ(get<0>(a).x, 42);
-//  a = 42;
-//  ASSERT_EQ(get<0>(a).x, 43);
-//  a = non_trivial_copy_assignment_t(42);
-//  ASSERT_EQ(get<1>(a).x, 42);
-//  b = a;
-//  ASSERT_EQ(get<1>(b).x, 47);
-//  a = b;
-//  ASSERT_EQ(get<1>(a).x, 52);
-//}
+TEST(assignment, back_and_forth) {
+  using V = variant<non_trivial_int_wrapper_t, non_trivial_copy_assignment_t>;
+  V a = non_trivial_int_wrapper_t(42);
+  V b = non_trivial_copy_assignment_t(14882);
+  ASSERT_EQ(get<0>(a).x, 42);
+  a = 42;
+  ASSERT_EQ(get<0>(a).x, 43);
+  a = non_trivial_copy_assignment_t(42);
+  ASSERT_EQ(get<1>(a).x, 42);
+  b = a;
+  ASSERT_EQ(get<1>(b).x, 47);
+  a = b;
+  ASSERT_EQ(get<1>(a).x, 52);
+}
 
 TEST(assignment, move_only) {
   only_movable::move_assignment_called = 0;

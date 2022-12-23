@@ -56,12 +56,18 @@ struct multi_union_helper_t {
       multi_union_helper_t<Rest...>::template only_operator_set<Index - 1, T>(mu.rest, std::forward<T>(other));
   }
 
-  template <typename Other_Variant>
-  constexpr static void construct_from_other(size_t ind, Other_Variant&& from, multi_union_t<First, Rest...>& to) {
+  constexpr static void construct_from_other_copy(size_t ind, multi_union_t<First, Rest...> const& from, multi_union_t<First, Rest...>& to) {
     if (ind == 0 || sizeof...(Rest) == 0)
-      new (std::remove_const_t<void*>(std::addressof(to.first))) First(std::forward<Other_Variant>(from).first);
+      new (std::remove_const_t<void*>(std::addressof(to.first))) First(from.first);
     else if constexpr (sizeof...(Rest) > 0)
-      multi_union_helper_t<Rest...>::template construct_from_other(ind - 1, from.rest, to.rest);
+      multi_union_helper_t<Rest...>::construct_from_other_copy(ind - 1, from.rest, to.rest);
+  }
+
+  constexpr static void construct_from_other_move(size_t ind, multi_union_t<First, Rest...>&& from, multi_union_t<First, Rest...>& to) {
+    if (ind == 0 || sizeof...(Rest) == 0)
+      new (std::remove_const_t<void*>(std::addressof(to.first))) First(std::move(from).first);
+    else if constexpr (sizeof...(Rest) > 0)
+      multi_union_helper_t<Rest...>::construct_from_other_move(ind - 1, std::move(from.rest), to.rest);
   }
 
   /// END: set
@@ -125,10 +131,10 @@ struct multi_union_helper_t {
 ///==================================================================================================================///
 /// multi_union_t
 
-template <typename First, typename... Rest_Types>
-union multi_union_t_<false, First, Rest_Types...> {
+template <typename First, typename... Rest>
+union multi_union_t_<false, First, Rest...> {
   First first;
-  multi_union_t<Rest_Types...> rest;
+  multi_union_t<Rest...> rest;
   char for_trivial_initialization;
   constexpr multi_union_t_() : for_trivial_initialization(0) {}
   //  constexpr multi_union_t() : for_trivial_initialization(0) {}
@@ -143,10 +149,10 @@ union multi_union_t_<false, First, Rest_Types...> {
   ~multi_union_t_() {};
 };
 
-template <typename First, typename... Rest_Types>
-union multi_union_t_<true, First, Rest_Types...> {
+template <typename First, typename... Rest>
+union multi_union_t_<true, First, Rest...> {
   First first;
-  multi_union_t<Rest_Types...> rest;
+  multi_union_t<Rest...> rest;
   char for_trivial_initialization;
   constexpr multi_union_t_() : for_trivial_initialization(0) {}
 

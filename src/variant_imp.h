@@ -73,7 +73,7 @@ public:
 
     storage.index = variant_npos;
     if (other.index() != variant_npos) {
-      mu_help::template construct_from_other(other.index(), other.storage.value, this->storage.value);
+      mu_help::construct_from_other_copy(other.index(), other.storage.value, this->storage.value);
       storage.index = other.index();
     }
 
@@ -90,7 +90,7 @@ public:
   constexpr variant(variant&& other) {
     storage.index = variant_npos;
     if (other.index() != variant_npos) {
-      mu_help::template construct_from_other(other.index(), std::move(other.storage.value), this->storage.value);
+      mu_help::construct_from_other_move(other.index(), std::move(other.storage.value), this->storage.value);
       storage.index = other.index();
     }
   }
@@ -166,7 +166,13 @@ public:
   template <typename T, typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>>
   variant& operator=(T x) {
     try {
-      mu_help::template set<get_index_by_type<T, First, Rest...>::index, T>(index(), storage.value, std::forward<T>(x));
+      mu_help::template
+          set<
+              get_index_by_type<T
+              //decltype(get_index_by_type<get_type_by_construct_type<T, First, Rest...>::type())
+              , First
+              , Rest...>::index, T>(index(), storage.value, std::forward<T>(x));
+
     } catch (...) {
       storage.index = variant_npos;
       throw;
@@ -265,10 +271,57 @@ public:
   constexpr static size_t size() noexcept {
     return sizeof...(Rest) + 1;
   }
+
+  constexpr void swap(variant& other) {
+    if (this == &other)
+      return;
+
+    if (index() == other.index()) {
+      if (!this->valueless_by_exception()) {
+        visit_helper::do_visit(
+            [&](auto&& a, auto&& b) {
+              using std::swap;
+              if constexpr (std::is_same_v<decltype(a), decltype(b)>)
+                swap(a, b);
+            },
+            *this, other);
+        std::swap(storage.index, other.storage.index);
+      }
+      return;
+    } else {
+      variant<First, Rest...> buffer = std::move(other);
+      other = std::move(*this);
+      *this = std::move(buffer);
+    }
+  }
+
+//  constexpr void swap(variant& other) {
+//    if (this == &other)
+//      return;
+//
+//    if (index() == other.index()) {
+//      if (!this->valueless_by_exception()) {
+//        visit_helper::do_visit(
+//            [&](auto&& a, auto&& b) {
+//              using std::swap;
+//              if constexpr (std::is_same_v<decltype(a), decltype(b)>)
+//                swap(a, b);
+//            },
+//            *this, other);
+//        std::swap(storage.index, other.storage.index);
+//      }
+//      return;
+//    } else {
+//      // std::swap(*this, other);
+////      variant<First, Rest...> buffer = *this;
+////      *this = other;
+////      other = buffer;
+//    }
+//  }
 };
 
 /// END: variant
-///================================================================f==================================================///
+///==================================================================================================================///
 /// Other Functions
 
 template <typename T, typename... Types>
