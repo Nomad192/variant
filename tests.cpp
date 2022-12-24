@@ -207,6 +207,36 @@ constexpr bool simple_copy_ctor_test() {
 }
 
 static_assert(simple_copy_ctor_test(), "Basic constexpr copy-constructor failed");
+//
+//
+//template <size_t N, typename Args>
+//void func(in_place_index_t<N>, Args&& args)
+//{
+//  std::cout << N << " " << std::forward<Args>(args);
+//}
+//
+////template <typename... Types>
+////struct testtt
+////{
+////  template<typename T>
+////  constexpr testtt(T&& t)
+////  {
+////    using Type = get_type_by_construct_type<T, Types...>;
+////    bool result = std::is_same_v<Type, double>;
+////    bool result1 = std::is_same_v<T, double>;
+////  }
+////};
+//
+//TEST(my, my) {
+//    simple_copy_ctor_test();
+//    //using found = get_type_by_construct_type<double, int, double>;
+//    //size_t ind = get_index_by_type<found, int, double>::index;
+//    //double value = 42.0;
+//    //func(in_place_index<get_index_by_type<found, int, double>::index>, 42.0);
+//    //testtt<int, double> x{42.0};
+//    //int a = 1;
+//    //variant<int, double> x{42.0};
+//}
 
 TEST(correctness, copy_ctor1) {
   ASSERT_TRUE(simple_copy_ctor_test());
@@ -275,38 +305,46 @@ constexpr bool simple_value_move_ctor() {
 }
 
 static_assert(simple_value_move_ctor(), "Simple value-forwarding ctor failed");
-//
+
 //TEST(correctness, value_move_ctor) {
 //  simple_value_move_ctor();
 //  variant<int, coin_wrapper> x(yac_coin{});
 //  ASSERT_TRUE(x.index() == 0);
 //}
-//
+
+TEST(correctness, alternative_selection) {
+  {
+    variant<char, std::optional<char16_t>> v = u'\u2043';
+    ASSERT_EQ(v.index(), 1);
+  }
+  {
+    double d = 3.14;
+    variant<int, std::reference_wrapper<double>> y = d;
+    ASSERT_EQ(y.index(), 1);
+  }
+  // For brave and truth
+  {
+    // See NB in #4 https://en.cppreference.com/w/cpp/utility/variant/variant
+    //variant<bool, std::string> v("asdasd");
+    char str[] = "abc";
+    variant<std::string, bool> y("abc");
+    ASSERT_EQ(y.index(), 0); // Overload resolution is not your friend anymore
+    //ASSERT_EQ(v.index(), 1); // Overload resolution is not your friend anymore
+  }
+  {
+    variant<long, double, float> v = 0;
+    ASSERT_EQ(v.index(), 0);
+  }
+  {
+    variant<std::vector<int>, bool, std::string> a(true);
+    ASSERT_EQ(a.index(), 1);
+  }
+}
+
 //TEST(correctness, alternative_selection) {
-//  {
-//    variant<char, std::optional<char16_t>> v = u'\u2043';
-//    ASSERT_EQ(v.index(), 1);
-//  }
-//  {
-//    double d = 3.14;
-//    variant<int, std::reference_wrapper<double>> y = d;
-//    ASSERT_EQ(y.index(), 1);
-//  }
-//  // For brave and truth
-//  {
-//    // See NB in #4 https://en.cppreference.com/w/cpp/utility/variant/variant
-//    variant<bool, std::string> v("asdasd");
-//    ASSERT_EQ(v.index(), 1); // Overload resolution is not your friend anymore
-//  }
-//  {
-//    variant<long, double, float> v = 0;
-//    ASSERT_EQ(v.index(), 0);
-//  }
-//  {
-//    variant<std::vector<int>, bool, std::string> a(true);
-//    ASSERT_EQ(a.index(), 1);
-//  }
+//
 //}
+
 //
 //TEST(correctness, valueless_by_exception) {
 //  using V = variant<std::vector<int>, throwing_move_operator_t>;
@@ -360,22 +398,30 @@ TEST(correctness, visit) {
   ASSERT_TRUE(was_called);
 }
 
-TEST(correctness, emplace) {
-  using V = variant<std::vector<int>, std::string>;
-  std::string s = "A fairly long string that will cause an allocation";
-  std::vector<int> t = {1, 2, 3};
-  V v = s;
-  ASSERT_EQ(v.index(), 1);
-  v.emplace<0>(t);
-  ASSERT_EQ(v.index(), 0);
-  ASSERT_EQ(get<0>(v), t);
-  v.emplace<std::string>(s);
-  ASSERT_EQ(v.index(), 1);
-  ASSERT_EQ(get<1>(v), s);
-  v.emplace<0>(t);
-  ASSERT_EQ(v.index(), 0);
-  ASSERT_EQ(get<0>(v), t);
+TEST(my, my)
+{
+  using found = get_type_by_construct_type<std::string, std::string>;
+  int ind = std::is_same_v<found, std::string>;
+  int ind1 = std::is_same_v<found, std::vector<int>>;
+  int a = 0;
 }
+
+//TEST(correctness, emplace) {
+//  using V = variant<std::vector<int>, std::string>;
+//  std::string s = "A fairly long string that will cause an allocation";
+//  std::vector<int> t = {1, 2, 3};
+//  V v = s;
+//  ASSERT_EQ(v.index(), 1);
+//  v.emplace<0>(t);
+//  ASSERT_EQ(v.index(), 0);
+//  ASSERT_EQ(get<0>(v), t);
+//  v.emplace<std::string>(s);
+//  ASSERT_EQ(v.index(), 1);
+//  ASSERT_EQ(get<1>(v), s);
+//  v.emplace<0>(t);
+//  ASSERT_EQ(v.index(), 0);
+//  ASSERT_EQ(get<0>(v), t);
+//}
 
 constexpr bool in_place_ctor() {
   variant<bool, double> x1(in_place_type<double>, 42);
@@ -652,13 +698,13 @@ TEST(assignment, move_only) {
   ASSERT_EQ(only_movable::move_assignment_called, 1);
 }
 
-TEST(assignment, different_alternatives) {
-  using V = variant<std::vector<int>, std::vector<double>>;
-  V a = std::vector{13.37, 2020.02};
-  V b = std::vector{1337, 14882};
-  a = b;
-  ASSERT_TRUE(holds_alternative<std::vector<int>>(a));
-}
+//TEST(assignment, different_alternatives) {
+//  using V = variant<std::vector<int>, std::vector<double>>;
+//  V a = std::vector{13.37, 2020.02};
+//  V b = std::vector{1337, 14882};
+//  a = b;
+//  ASSERT_TRUE(holds_alternative<std::vector<int>>(a));
+//}
 
 TEST(constructor, move_only) {
   using V = variant<only_movable>;

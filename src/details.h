@@ -137,21 +137,19 @@ concept construct = requires(T&& t)
   Stored_Type{std::forward<T>(t)};
 };
 
-struct invalid_type{};
-
 template <typename T, typename... Types>
-struct get_type_by_construct_type_{
-  static constexpr void type() requires(false) { return; }
+struct get_type_by_construct_type_WORK {
+  static constexpr void type() requires(false) {return;};
 };
 
 template <typename T, typename First, typename... Rest>
-struct get_type_by_construct_type_<T, First, Rest...> : get_type_by_construct_type_<T, Rest...> {
-  using get_type_by_construct_type_<T, Rest...>::type;
-  static constexpr First type() requires(construct<T, First) { return{}; }
+struct get_type_by_construct_type_WORK<T, First, Rest...> : get_type_by_construct_type_WORK<T, Rest...> {
+  using get_type_by_construct_type_WORK<T, Rest...>::type;
+  static constexpr First type(First const& obj) requires(construct<T, First[]>) {return {};};
 };
 
 template <typename T, typename... Types>
-using get_type_by_construct_type = get_type_by_construct_type_<T, Types...>;
+using get_type_by_construct_type = decltype(get_type_by_construct_type_WORK<T, Types...>::type(std::declval<T>()));
 
 /// END: get_type_by_construct_type
 ///==================================================================================================================///

@@ -49,8 +49,6 @@ public:
     // storage_t<First, Rest...>::template set<get_index_by_type<T, First, Rest...>::index, Args...>(
     // storage, std::forward<Args>(args)...);
   }
-  template <typename T>
-  constexpr variant(T x) : variant(in_place_type<T>, std::forward<T>(x)) {}
 
   constexpr variant(const variant& other) requires(trivially_copy_constructible<First, Rest...>) = default;
   //
@@ -94,6 +92,15 @@ public:
       storage.index = other.index();
     }
   }
+
+  template <typename T
+            , typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>
+            , typename Type = get_type_by_construct_type<T, First, Rest...>
+            , size_t Index = get_index_by_type<Type, First, Rest...>::index
+            , typename = std::enable_if_t<Index != variant_npos>
+            >
+  constexpr variant(T&& x) : storage(in_place_index<Index>, std::forward<T>(x))
+  {}
 
   variant& operator=(const variant& other) {
     if (this == &other)
@@ -163,27 +170,24 @@ public:
     return *this;
   }
 
-  template <typename T, typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>>
-  variant& operator=(T x) {
+  template <typename T
+            , typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>
+            , typename Type = get_type_by_construct_type<T, First, Rest...>
+            , size_t Index = get_index_by_type<Type, First, Rest...>::index
+            , typename = std::enable_if_t<Index != variant_npos>
+                >
+  variant& operator=(T&& x) {
     try {
-      if (index() ==
-          get_index_by_type<decltype(get_type_by_construct_type<T, First, Rest...>::type()), First, Rest...>::index) {
-        mu_help::template operator_set<
-            get_index_by_type<decltype(get_type_by_construct_type<T, First, Rest...>::type()), First, Rest...>::index,
-            T>(index(), storage.value, std::forward<T>(x));
+      if (index() == Index) {
+        mu_help::template operator_set<Index, T>(index(), storage.value, std::forward<T>(x));
       } else {
-        mu_help::template set<
-            get_index_by_type<
-                // T
-                decltype(get_type_by_construct_type<T, First, Rest...>::type()), First, Rest...>::index,
-            T>(index(), storage.value, std::forward<T>(x));
+        mu_help::template set<Index, T>(index(), storage.value, std::forward<T>(x));
       }
     } catch (...) {
       storage.index = variant_npos;
       throw;
     }
-    storage.index =
-        get_index_by_type<decltype(get_type_by_construct_type<T, First, Rest...>::type()), First, Rest...>::index;
+    storage.index = Index;
 
     return *this;
   }
@@ -199,10 +203,15 @@ public:
     return storage.index == variant_npos;
   }
 
-  template <typename T>
-  void emplace(T x) {
+  template <typename T
+            , typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>
+            , size_t Index = get_index_by_type<T, First, Rest...>::index
+            , typename = std::enable_if_t<Index != variant_npos>
+            , typename... Args
+                >
+  void emplace(Args&&... args) {
     try {
-      mu_help::template set<get_index_by_type<T, First, Rest...>::index, T>(index(), storage.value, std::forward<T>(x));
+      mu_help::template set<Index>(index(), storage.value, std::forward<Args>(args)...);
     } catch (...) {
       storage.index = variant_npos;
       throw;
@@ -210,10 +219,10 @@ public:
     storage.index = get_index_by_type<T, First, Rest...>::index;
   }
 
-  template <size_t Index, typename T>
-  void emplace(T x) {
+  template <size_t Index, typename... Args>
+  void emplace(Args&&... args) {
     try {
-      mu_help::template set<Index, T>(index(), storage.value, std::forward<T>(x));
+      mu_help::template set<Index>(index(), storage.value, std::forward<Args>(args)...);
     } catch (...) {
       storage.index = variant_npos;
       throw;
