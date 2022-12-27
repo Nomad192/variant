@@ -106,12 +106,13 @@ public:
     if (this == &other)
       return *this;
 
+    mu_help::template reset<0>(index(), this->storage.value);
     try {
       if (index() == other.index())
         visit_helper::do_visit(
             [&](auto other_val) -> void {
-              multi_union_helper_t<First, Rest...>::template operator_set<
-                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value,
+              multi_union_helper_t<First, Rest...>::template only_operator_set<
+                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.value,
                                                                                  other_val);
               storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
             },
@@ -119,8 +120,8 @@ public:
       else
         visit_helper::do_visit(
             [&](auto other_val) -> void {
-              multi_union_helper_t<First, Rest...>::template set<
-                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value,
+              multi_union_helper_t<First, Rest...>::template only_set<
+                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.value,
                                                                                  other_val);
               storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
             },
@@ -143,12 +144,13 @@ public:
     if (this == &other)
       return *this;
 
+    mu_help::template reset<0>(index(), this->storage.value);
     try {
       if (index() == other.index())
         visit_helper::do_visit(
             [&](auto other_val) -> void {
-              multi_union_helper_t<First, Rest...>::template operator_set<
-                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value,
+              multi_union_helper_t<First, Rest...>::template only_operator_set<
+                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.value,
                                                                                  std::move(other_val));
               storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
             },
@@ -156,8 +158,8 @@ public:
       else
         visit_helper::do_visit(
             [&](auto other_val) -> void {
-              multi_union_helper_t<First, Rest...>::template set<
-                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.index, storage.value,
+              multi_union_helper_t<First, Rest...>::template only_set<
+                  get_index_by_type<decltype(other_val), First, Rest...>::index>(storage.value,
                                                                                  std::move(other_val));
               storage.index = get_index_by_type<decltype(other_val), First, Rest...>::index;
             },
