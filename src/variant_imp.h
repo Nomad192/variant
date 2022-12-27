@@ -52,7 +52,7 @@ public:
 
   constexpr variant(const variant& other) requires(trivially_copy_constructible<First, Rest...>) = default;
   //
-  //  struct visiter
+  //  struct visitor
   //  {
   //    template <typename Arg>
   //    void operator()(Arg&& other_val)
@@ -71,11 +71,11 @@ public:
 
     storage.index = variant_npos;
     if (other.index() != variant_npos) {
-      mu_help::construct_from_other_copy(other.index(), other.storage.value, this->storage.value);
+      mu_help::construct_from_other(other.index(), other.storage.value, this->storage.value);
       storage.index = other.index();
     }
 
-    /// wtf aaaaaaaaaaaaaaaaaaaaaa
+    /// wtf aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     //    visit([&](auto other_val) -> void {
     //      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First,
     //      Rest...>::index>(storage, other_val); st.index = get_index_by_type<decltype(other_val), First,
@@ -88,7 +88,7 @@ public:
   constexpr variant(variant&& other) {
     storage.index = variant_npos;
     if (other.index() != variant_npos) {
-      mu_help::construct_from_other_move(other.index(), std::move(other.storage.value), this->storage.value);
+      mu_help::construct_from_other(other.index(), std::move(other.storage.value), this->storage.value);
       storage.index = other.index();
     }
   }
@@ -177,17 +177,18 @@ public:
             , typename = std::enable_if_t<Index != variant_npos>
                 >
   variant& operator=(T&& x) {
-    try {
-      if (index() == Index) {
+    if(index() != Index)
+      this->emplace<Index>(Type(std::forward<T>(x)));     /// maybe exception
+    else
+    {
+      try {
         mu_help::template operator_set<Index, T>(index(), storage.value, std::forward<T>(x));
-      } else {
-        mu_help::template set<Index, T>(index(), storage.value, std::forward<T>(x));
+      } catch (...) {
+        storage.index = variant_npos;
+        throw;
       }
-    } catch (...) {
-      storage.index = variant_npos;
-      throw;
+      storage.index = Index;
     }
-    storage.index = Index;
 
     return *this;
   }
@@ -304,9 +305,22 @@ public:
       }
       return;
     } else {
-      variant<First, Rest...> buffer = std::move(other);
-      other = std::move(*this);
-      *this = std::move(buffer);
+      if(this->valueless_by_exception())
+      {
+        *this = std::move(other);
+        other.storage.index = variant_npos;
+      }
+      else if(other.valueless_by_exception())
+      {
+        other = std::move(*this);
+        storage.index = variant_npos;
+      }
+      else
+      {
+        variant<First, Rest...> buffer = std::move(other);
+        other = std::move(*this);
+        *this = std::move(buffer);
+      }
     }
   }
 };
