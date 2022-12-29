@@ -140,7 +140,7 @@ union multi_union_t_<false, First, Rest...> {
   constexpr explicit multi_union_t_(in_place_index_t<N>, Args&&... args)
       : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
 
-  ~multi_union_t_() {};
+  ~multi_union_t_(){};
 };
 
 template <typename First, typename... Rest>

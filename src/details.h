@@ -132,20 +132,23 @@ using get_index_by_type = get_index_by_type_<0, T, Types...>;
 /// get_type_by_construct_type
 
 template <typename T, typename Stored_Type>
-concept construct = requires(T&& t)
-{
+concept construct = requires(T && t) {
   Stored_Type{std::forward<T>(t)};
 };
 
 template <typename T, typename... Types>
 struct get_type_by_construct_type_WORK {
-  static constexpr void type() requires(true) {return;};
+  static constexpr void type() requires(true) {
+    return;
+  };
 };
 
 template <typename T, typename First, typename... Rest>
 struct get_type_by_construct_type_WORK<T, First, Rest...> : get_type_by_construct_type_WORK<T, Rest...> {
   using get_type_by_construct_type_WORK<T, Rest...>::type;
-  static constexpr First type(First const& obj) requires(construct<T, First[]>) {return {};};
+  static constexpr First type(First const& obj) requires(construct<T, First[]>) {
+    return {};
+  };
 };
 
 template <typename T, typename... Types>

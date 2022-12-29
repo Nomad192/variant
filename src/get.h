@@ -54,16 +54,13 @@ constexpr T const&& get(const variant<Types...>&& v) {
 /// get_if from Index
 
 template <std::size_t Index, typename... Types>
-constexpr std::add_pointer_t<variant_alternative_t<Index, variant<Types...>>>
-get_if(variant<Types...>* pv) noexcept
-{
+constexpr std::add_pointer_t<variant_alternative_t<Index, variant<Types...>>> get_if(variant<Types...>* pv) noexcept {
   return pv->template get_if_from_index<Index>();
 }
 
 template <std::size_t Index, typename... Types>
 constexpr std::add_pointer_t<const variant_alternative_t<Index, variant<Types...>>>
-get_if(const variant<Types...>* pv) noexcept
-{
+get_if(const variant<Types...>* pv) noexcept {
   return pv->template get_if_from_index<Index>();
 }
 
@@ -72,14 +69,12 @@ get_if(const variant<Types...>* pv) noexcept
 /// get_if from Type
 
 template <class T, typename... Types>
-constexpr std::add_pointer_t<T> get_if(variant<Types...>* pv) noexcept
-{
+constexpr std::add_pointer_t<T> get_if(variant<Types...>* pv) noexcept {
   return pv->template get_if_from_index<get_index_by_type<T, Types...>::index>();
 }
 
 template <class T, typename... Types>
-constexpr std::add_pointer_t<const T> get_if(const variant<Types...>* pv) noexcept
-{
+constexpr std::add_pointer_t<const T> get_if(const variant<Types...>* pv) noexcept {
   return pv->template get_if_from_index<get_index_by_type<T, Types...>::index>();
 }
 
