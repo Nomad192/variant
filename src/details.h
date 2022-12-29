@@ -139,7 +139,7 @@ concept construct = requires(T&& t)
 
 template <typename T, typename... Types>
 struct get_type_by_construct_type_WORK {
-  static constexpr void type() requires(false) {return;};
+  static constexpr void type() requires(true) {return;};
 };
 
 template <typename T, typename First, typename... Rest>
