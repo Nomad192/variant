@@ -20,48 +20,57 @@ struct multi_union_helper_t {
   ///================================================================================================================///
   /// set
 
-  template <size_t Index>
   constexpr static void reset(size_t index, multi_union_t<First, Rest...>& mu) {
-    if (Index == index)
+    if (index == 0)
       mu.first.~First();
     else if constexpr (sizeof...(Rest) > 0)
-      return multi_union_helper_t<Rest...>::template reset<Index + 1>(index, mu.rest);
+      return multi_union_helper_t<Rest...>::reset(index - 1, mu.rest);
   }
+
+  //  template <size_t Index, typename... Args>
+  //  constexpr static void set(size_t index, multi_union_t<First, Rest...>& mu, Args&&... args) {
+  //    multi_union_helper_t<First, Rest...>::reset(index, mu);
+  //    multi_union_helper_t<First, Rest...>::template only_set<Index>(mu, std::forward<Args>(args)...);
+  //  }
+
+  //  template <size_t Index, typename T>
+  //  constexpr static void operator_set(size_t& prev_index, multi_union_t<First, Rest...>& mu, T&& other) {
+  //    multi_union_helper_t<First, Rest...>::reset(prev_index, mu);
+  //    prev_index = variant_npos;
+  //    multi_union_helper_t<First, Rest...>::template only_operator_set<Index>(mu, std::forward<T>(other));
+  //  }
 
   template <size_t Index, typename... Args>
-  constexpr static void set(size_t index, multi_union_t<First, Rest...>& mu, Args&&... args) {
-    multi_union_helper_t<First, Rest...>::template reset<0>(index, mu);
-    multi_union_helper_t<First, Rest...>::template only_set<Index>(mu, std::forward<Args>(args)...);
-  }
-
-  template <size_t Index, typename T>
-  constexpr static void operator_set(size_t index, multi_union_t<First, Rest...>& mu, T&& other) {
-    multi_union_helper_t<First, Rest...>::template reset<0>(index, mu);
-    multi_union_helper_t<First, Rest...>::template only_operator_set<Index>(mu, std::forward<T>(other));
-  }
-
-  template <size_t Index, typename... Args>
-  constexpr static void only_set(multi_union_t<First, Rest...>& mu, Args&&... args) {
+  constexpr static void constructor(multi_union_t<First, Rest...>& mu, Args&&... args) {
     if constexpr (sizeof...(Rest) == 0 || Index == 0)
       new (std::remove_const_t<void*>(std::addressof(mu.first))) First(std::forward<Args>(args)...);
     else if constexpr (sizeof...(Rest) > 0)
-      multi_union_helper_t<Rest...>::template only_set<Index - 1, Args...>(mu.rest, std::forward<Args>(args)...);
+      multi_union_helper_t<Rest...>::template constructor<Index - 1, Args...>(mu.rest, std::forward<Args>(args)...);
   }
 
   template <size_t Index, typename T>
-  constexpr static void only_operator_set(multi_union_t<First, Rest...>& mu, T&& other) {
+  constexpr static void set(multi_union_t<First, Rest...>& mu, T&& other) {
     if constexpr (sizeof...(Rest) == 0 || Index == 0)
       mu.first = std::forward<T>(other);
     else if constexpr (sizeof...(Rest) > 0)
-      multi_union_helper_t<Rest...>::template only_operator_set<Index - 1, T>(mu.rest, std::forward<T>(other));
+      multi_union_helper_t<Rest...>::template set<Index - 1, T>(mu.rest, std::forward<T>(other));
   }
 
   template <typename Other_MU>
-  constexpr static void construct_from_other(size_t ind, Other_MU&& from, multi_union_t<First, Rest...>& to) {
+  constexpr static void constructor_from_other(size_t ind, Other_MU&& from, multi_union_t<First, Rest...>& to) {
     if (ind == 0 || sizeof...(Rest) == 0)
       new (std::remove_const_t<void*>(std::addressof(to.first))) First(std::forward<Other_MU>(from).first);
     else if constexpr (sizeof...(Rest) > 0)
-      multi_union_helper_t<Rest...>::template construct_from_other(ind - 1, std::forward<Other_MU>(from).rest, to.rest);
+      multi_union_helper_t<Rest...>::template constructor_from_other(ind - 1, std::forward<Other_MU>(from).rest,
+                                                                     to.rest);
+  }
+
+  template <typename Other_MU>
+  constexpr static void set_from_other(size_t ind, Other_MU&& from, multi_union_t<First, Rest...>& to) {
+    if (ind == 0 || sizeof...(Rest) == 0)
+      to.first = std::forward<Other_MU>(from).first;
+    else if constexpr (sizeof...(Rest) > 0)
+      multi_union_helper_t<Rest...>::template set_from_other(ind - 1, std::forward<Other_MU>(from).rest, to.rest);
   }
 
   /// END: set
@@ -140,7 +149,7 @@ union multi_union_t_<false, First, Rest...> {
   constexpr explicit multi_union_t_(in_place_index_t<N>, Args&&... args)
       : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
 
-  ~multi_union_t_(){};
+  ~multi_union_t_() {};
 };
 
 template <typename First, typename... Rest>
@@ -164,41 +173,105 @@ union multi_union_t_<true, First, Rest...> {
 ///==================================================================================================================///
 /// storage_t
 
-template <bool is_trivially_destructible, typename... Types>
-struct storage_t_ {};
-
 template <typename... Types>
-using storage_t = storage_t_<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
-
-template <typename... Types>
-struct storage_t_<true, Types...> {
+struct base_storage {
   size_t index = 0;
   multi_union_t<Types...> value;
+  using mu_help = multi_union_helper_t<Types...>;
 
-  constexpr storage_t_() = default;
+  constexpr base_storage() = default;
 
-  template <size_t N, typename... Args>
-  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
-      : index(N), value(in_place_index<N>, std::forward<Args>(args)...) {}
+  size_t reset() {
+    size_t prev_index = index;
+    index = variant_npos;
+    mu_help::reset(prev_index, value);
+    return prev_index;
+  }
 
-  ~storage_t_() = default;
+  template <size_t Index, typename... Args>
+  constexpr explicit base_storage(in_place_index_t<Index>, Args&&... args)
+      : index(Index), value(in_place_index<Index>, std::forward<Args>(args)...) {}
+
+  template <size_t Index, typename... Args>
+  constexpr void constructor(Args&&... args) {
+    reset();
+    mu_help::template constructor<Index>(value, std::forward<Args>(args)...);
+    index = Index;
+  }
+
+  template <size_t Index, typename T>
+  constexpr void set(T&& t) {
+    if (reset() == Index)
+      mu_help::template set<Index>(value, std::forward<T>(t));
+    else
+      mu_help::template constructor<Index>(value, std::forward<T>(t));
+    index = Index;
+  }
+
+  template <typename Other_PS>
+  constexpr void constructor_from_other(Other_PS&& other) {
+    size_t new_index = other.index;
+    reset();
+    mu_help::template constructor_from_other(other.index, std::forward<Other_PS>(other).value, this->value);
+    index = new_index;
+  }
+
+  template <typename Other_PS>
+  constexpr void set_from_other(Other_PS&& other) {
+    size_t new_index = other.index;
+    if (reset() == other.index)
+      mu_help::template set_from_other(other.index, std::forward<Other_PS>(other).value, this->value);
+    else
+      mu_help::template constructor_from_other(other.index, std::forward<Other_PS>(other).value, this->value);
+    index = new_index;
+  }
+};
+
+namespace helper {
+template <bool is_trivially_destructible, typename... Types>
+struct storage_t_DONT_USE {};
+
+template <typename... Types>
+struct storage_t_DONT_USE<true, Types...> : base_storage<Types...> {
+  using base_storage<Types...>::base_storage;
+  //  using prev_storage<Types...>::constructor;
+  //  using prev_storage<Types...>::constructor_from_other;
+  //  using prev_storage<Types...>::set;
+  //  using prev_storage<Types...>::set_from_other;
+
+  //constexpr storage_t_DONT_USE() = default;
+
+  //  template <size_t N, typename... Args>
+  //  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
+  //      : index(N), value(in_place_index<N>, std::forward<Args>(args)...) {}
+
+  ~storage_t_DONT_USE() = default;
 };
 
 template <typename... Types>
-struct storage_t_<false, Types...> {
-  size_t index = 0;
-  multi_union_t<Types...> value;
+struct storage_t_DONT_USE<false, Types...> : base_storage<Types...> {
+  //  size_t index = 0;
+  //  multi_union_t<Types...> value;
+  using base_storage<Types...>::base_storage;
+  //  using prev_storage<Types...>::constructor;
+  //  using prev_storage<Types...>::constructor_from_other;
+  //  using prev_storage<Types...>::set;
+  //  using prev_storage<Types...>::set_from_other;
 
-  constexpr storage_t_() = default;
+  //constexpr storage_t_DONT_USE() = default;
 
-  template <size_t N, typename... Args>
-  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
-      : index(N), value(in_place_index<N>, std::forward<Args>(args)...) {}
+  //  template <size_t N, typename... Args>
+  //  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
+  //      : index(N), value(in_place_index<N>, std::forward<Args>(args)...) {}
 
-  ~storage_t_() {
-    multi_union_helper_t<Types...>::template reset<0>(index, value);
+  ~storage_t_DONT_USE() {
+    multi_union_helper_t<Types...>::reset(this->index, this->value);
   };
 };
+} // namespace helper
+
+template <typename... Types>
+using storage_t = helper::storage_t_DONT_USE<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
 
 /// END: storage_t
 ///==================================================================================================================///
