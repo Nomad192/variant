@@ -1,6 +1,7 @@
 #pragma once
 #include <utility>
 
+namespace helper {
 ///==================================================================================================================///
 /// concepts
 
@@ -52,3 +53,4 @@ concept nothrow_move_assignable = std::conjunction_v<std::is_nothrow_move_assign
 
 /// END: concepts
 ///==================================================================================================================///
+} // namespace helper

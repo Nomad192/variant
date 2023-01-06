@@ -27,19 +27,6 @@ struct multi_union_helper_t {
       return multi_union_helper_t<Rest...>::reset(index - 1, mu.rest);
   }
 
-  //  template <size_t Index, typename... Args>
-  //  constexpr static void set(size_t index, multi_union_t<First, Rest...>& mu, Args&&... args) {
-  //    multi_union_helper_t<First, Rest...>::reset(index, mu);
-  //    multi_union_helper_t<First, Rest...>::template only_set<Index>(mu, std::forward<Args>(args)...);
-  //  }
-
-  //  template <size_t Index, typename T>
-  //  constexpr static void operator_set(size_t& prev_index, multi_union_t<First, Rest...>& mu, T&& other) {
-  //    multi_union_helper_t<First, Rest...>::reset(prev_index, mu);
-  //    prev_index = variant_npos;
-  //    multi_union_helper_t<First, Rest...>::template only_operator_set<Index>(mu, std::forward<T>(other));
-  //  }
-
   template <size_t Index, typename... Args>
   constexpr static void constructor(multi_union_t<First, Rest...>& mu, Args&&... args) {
     if constexpr (sizeof...(Rest) == 0 || Index == 0)
@@ -234,35 +221,13 @@ struct storage_t_DONT_USE {};
 template <typename... Types>
 struct storage_t_DONT_USE<true, Types...> : base_storage<Types...> {
   using base_storage<Types...>::base_storage;
-  //  using prev_storage<Types...>::constructor;
-  //  using prev_storage<Types...>::constructor_from_other;
-  //  using prev_storage<Types...>::set;
-  //  using prev_storage<Types...>::set_from_other;
-
-  // constexpr storage_t_DONT_USE() = default;
-
-  //  template <size_t N, typename... Args>
-  //  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
-  //      : index(N), value(in_place_index<N>, std::forward<Args>(args)...) {}
 
   ~storage_t_DONT_USE() = default;
 };
 
 template <typename... Types>
 struct storage_t_DONT_USE<false, Types...> : base_storage<Types...> {
-  //  size_t index = 0;
-  //  multi_union_t<Types...> value;
   using base_storage<Types...>::base_storage;
-  //  using prev_storage<Types...>::constructor;
-  //  using prev_storage<Types...>::constructor_from_other;
-  //  using prev_storage<Types...>::set;
-  //  using prev_storage<Types...>::set_from_other;
-
-  // constexpr storage_t_DONT_USE() = default;
-
-  //  template <size_t N, typename... Args>
-  //  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
-  //      : index(N), value(in_place_index<N>, std::forward<Args>(args)...) {}
 
   ~storage_t_DONT_USE() {
     multi_union_helper_t<Types...>::reset(this->index, this->value);
