@@ -90,7 +90,7 @@ struct variant_alternative<N, const volatile V> {
 
 /// END: variant_alternative
 ///==================================================================================================================///
-/// END: cppreference moment
+/// END: https://cppreference.com Moment
 ///==================================================================================================================///
 /// Standard Moment
 
@@ -110,51 +110,56 @@ private:
 
 /// END: Standard Moment
 ///==================================================================================================================///
-/// My Helper
+/// Helper
 ///==================================================================================================================///
 /// get_index_by_type
 
+namespace helper {
 template <size_t N, typename T, typename... Rest>
-struct get_index_by_type_ {
+struct get_index_by_type_DONT_USE {
   static constexpr size_t index = -1;
 };
 
 template <size_t N, typename T, typename First, typename... Rest>
-struct get_index_by_type_<N, T, First, Rest...> {
-  static constexpr size_t index = std::is_same_v<T, First> ? N : get_index_by_type_<N + 1, T, Rest...>::index;
+struct get_index_by_type_DONT_USE<N, T, First, Rest...> {
+  static constexpr size_t index = std::is_same_v<T, First> ? N : get_index_by_type_DONT_USE<N + 1, T, Rest...>::index;
 };
+} // namespace helper
 
 template <typename T, typename... Types>
-using get_index_by_type = get_index_by_type_<0, T, Types...>;
+using get_index_by_type = helper::get_index_by_type_DONT_USE<0, T, Types...>;
 
 /// END: get_index_by_type
 ///------------------------------------------------------///
 /// get_type_by_construct_type
 
+namespace helper {
 template <typename T, typename Stored_Type>
 concept construct = requires(T && t) {
   Stored_Type{std::forward<T>(t)};
 };
 
 template <typename T, typename... Types>
-struct get_type_by_construct_type_WORK {
+struct get_type_by_construct_type_DONT_USE {
   static constexpr void type() requires(true) {
     return;
   };
 };
 
 template <typename T, typename First, typename... Rest>
-struct get_type_by_construct_type_WORK<T, First, Rest...> : get_type_by_construct_type_WORK<T, Rest...> {
-  using get_type_by_construct_type_WORK<T, Rest...>::type;
+struct get_type_by_construct_type_DONT_USE<T, First, Rest...> : get_type_by_construct_type_DONT_USE<T, Rest...> {
+  using get_type_by_construct_type_DONT_USE<T, Rest...>::type;
   static constexpr First type(First const& obj) requires(construct<T, First[]>) {
     return {};
-  };
+  }
 };
+} // namespace helper
 
 template <typename T, typename... Types>
-using get_type_by_construct_type = decltype(get_type_by_construct_type_WORK<T, Types...>::type(std::declval<T>()));
+using get_type_by_construct_type =
+    decltype(helper::get_type_by_construct_type_DONT_USE<T, Types...>::type(std::declval<T>()));
 
 /// END: get_type_by_construct_type
 ///==================================================================================================================///
-/// END: My Helper
+/// END: Helper
 ///==================================================================================================================///
