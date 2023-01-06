@@ -67,7 +67,8 @@ public:
   /// operator=
 
   variant& operator=(const variant& other) noexcept
-      requires(helper::trivially_copy_assignable<First, Rest...>&& helper::trivially_copy_constructible<First, Rest...>) = default;
+      requires(helper::trivially_copy_assignable<First, Rest...>&&
+                   helper::trivially_copy_constructible<First, Rest...>) = default;
 
   variant& operator=(const variant& other) noexcept(
       helper::nothrow_copy_assignable<First, Rest...>&& helper::nothrow_copy_constructible<First, Rest...>)
@@ -83,7 +84,8 @@ public:
   }
 
   variant& operator=(variant&& other) noexcept
-      requires(helper::trivially_move_assignable<First, Rest...>&& helper::trivially_move_constructible<First, Rest...>) = default;
+      requires(helper::trivially_move_assignable<First, Rest...>&&
+                   helper::trivially_move_constructible<First, Rest...>) = default;
 
   variant& operator=(variant&& other) noexcept(
       helper::nothrow_move_assignable<First, Rest...>&& helper::nothrow_move_constructible<First, Rest...>)
