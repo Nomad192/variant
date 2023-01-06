@@ -149,7 +149,7 @@ union multi_union_t_<false, First, Rest...> {
   constexpr explicit multi_union_t_(in_place_index_t<N>, Args&&... args)
       : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
 
-  ~multi_union_t_() {};
+  ~multi_union_t_(){};
 };
 
 template <typename First, typename... Rest>
@@ -239,7 +239,7 @@ struct storage_t_DONT_USE<true, Types...> : base_storage<Types...> {
   //  using prev_storage<Types...>::set;
   //  using prev_storage<Types...>::set_from_other;
 
-  //constexpr storage_t_DONT_USE() = default;
+  // constexpr storage_t_DONT_USE() = default;
 
   //  template <size_t N, typename... Args>
   //  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
@@ -258,7 +258,7 @@ struct storage_t_DONT_USE<false, Types...> : base_storage<Types...> {
   //  using prev_storage<Types...>::set;
   //  using prev_storage<Types...>::set_from_other;
 
-  //constexpr storage_t_DONT_USE() = default;
+  // constexpr storage_t_DONT_USE() = default;
 
   //  template <size_t N, typename... Args>
   //  constexpr explicit storage_t_(in_place_index_t<N>, Args&&... args)
