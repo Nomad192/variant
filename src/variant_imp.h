@@ -1,70 +1,28 @@
 #pragma once
 
+#include "concepts.h"
 #include "multi_union_t.h"
 
 ///==================================================================================================================///
-/// variant
+/// do_visit declaration
+
+/**
+ * I can't use my visit here because compiler can't choose from my and the standard visit
+ **/
 
 namespace visit_helper {
 template <typename Visitor, typename... Variants>
 constexpr auto do_visit(Visitor&& visitor, Variants&&... variants);
 }
 
+/// END: do_visit declaration
 ///==================================================================================================================///
-
-template <typename... Types>
-concept trivially_copy_constructible = std::conjunction_v<std::is_trivially_copy_constructible<Types>...>;
-
-template <typename... Types>
-concept trivially_move_constructible = std::conjunction_v<std::is_trivially_move_constructible<Types>...>;
-
-///------------------------------------------------------------------------------------------------------------------///
-
-template <typename... Types>
-concept copy_constructible = std::conjunction_v<std::is_copy_constructible<Types>...>;
-
-template <typename... Types>
-concept nothrow_copy_constructible = std::conjunction_v<std::is_nothrow_copy_constructible<Types>...>;
-
-///------------------------------------------------------------------------------------------------------------------///
-
-template <typename... Types>
-concept move_constructible = std::conjunction_v<std::is_move_constructible<Types>...>;
-
-template <typename... Types>
-concept nothrow_move_constructible = std::conjunction_v<std::is_nothrow_move_constructible<Types>...>;
-
-///==================================================================================================================///
-
-template <typename... Types>
-concept trivially_copy_assignable = std::conjunction_v<std::is_trivially_copy_assignable<Types>...>;
-
-template <typename... Types>
-concept trivially_move_assignable = std::conjunction_v<std::is_trivially_move_assignable<Types>...>;
-
-///------------------------------------------------------------------------------------------------------------------///
-
-template <typename... Types>
-concept copy_assignable = std::conjunction_v<std::is_copy_assignable<Types>...>;
-
-template <typename... Types>
-concept nothrow_copy_assignable = std::conjunction_v<std::is_nothrow_copy_assignable<Types>...>;
-
-///------------------------------------------------------------------------------------------------------------------///
-
-template <typename... Types>
-concept move_assignable = std::conjunction_v<std::is_move_assignable<Types>...>;
-
-template <typename... Types>
-concept nothrow_move_assignable = std::conjunction_v<std::is_nothrow_move_assignable<Types>...>;
-
-///==================================================================================================================///
+/// variant
 
 template <typename First, typename... Rest>
 struct variant {
 private:
   storage_t<First, Rest...> storage;
-
   using mu_help = multi_union_helper_t<First, Rest...>;
 
 public:
@@ -75,65 +33,24 @@ public:
       requires(std::is_default_constructible_v<First>)
       : variant(in_place_index<0>) {}
   template <
-      size_t N,
-      typename... Args
-      //            , typename Valid_Index =
-      //                std::enable_if_t<N<sizeof...(Rest) + 1>,
-      //                                 typename IS_Constructible = std::enable_if_t<std::is_constructible_v<
-      //                                     typename get_type_by_index<N, First, Rest...>::type,
-      //                                     Args...>>
-      ,
-      typename = std::enable_if_t<N <= sizeof...(Rest)>,
+      size_t N, typename... Args, typename = std::enable_if_t<N <= sizeof...(Rest)>,
       typename = std::enable_if_t<std::is_constructible_v<variant_alternative_t<N, variant<First, Rest...>>, Args...>>>
-  constexpr variant(in_place_index_t<N>, Args&&... args) : storage(in_place_index<N>, std::forward<Args>(args)...) {
-    // storage_t<First, Rest...>::template set<N, Args...>(storage, std::forward<Args>(args)...);
-  }
-  template <typename T,
-            typename... Args
-            //      , typename Valid_Type = std::enable_if_t<
-            //          get_index_by_type<T, First, Rest...>::index<sizeof...(Rest) + 1>,
-            //          typename IS_Constructible = std::enable_if_t<std::is_constructible_v<
-            //              T, Args...>>
-            ,
-            size_t N = get_index_by_type<T, First, Rest...>::index, typename = std::enable_if_t<N <= sizeof...(Rest)>,
+  constexpr variant(in_place_index_t<N>, Args&&... args) : storage(in_place_index<N>, std::forward<Args>(args)...) {}
+
+  template <typename T, typename... Args, size_t N = get_index_by_type<T, First, Rest...>::index,
+            typename = std::enable_if_t<N <= sizeof...(Rest)>,
             typename = std::enable_if_t<std::is_constructible_v<T, Args...>>>
-  constexpr variant(in_place_type_t<T>, Args&&... args) : storage(in_place_index<N>, std::forward<Args>(args)...) {
-    // storage_t<First, Rest...>::template set<get_index_by_type<T, First, Rest...>::index, Args...>(
-    // storage, std::forward<Args>(args)...);
-  }
+  constexpr variant(in_place_type_t<T>, Args&&... args) : storage(in_place_index<N>, std::forward<Args>(args)...) {}
 
   constexpr variant(const variant& other) requires(trivially_copy_constructible<First, Rest...>) = default;
-  //
-  //  struct visitor
-  //  {
-  //    template <typename Arg>
-  //    void operator()(Arg&& other_val)
-  //    {
-  //      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First,
-  //      Rest...>::index>(storage, other_val);
-  //    }
-  //  };
-  //
 
   constexpr variant(const variant& other) noexcept(nothrow_copy_constructible<First, Rest...>)
       requires(copy_constructible<First, Rest...> && !trivially_copy_constructible<First, Rest...>) {
-    //    if constexpr (other.index() == 0)
-    //    {
-    //      new (std::addressof(storage.first)) First(other.storage.first);
-    //    }
-
     storage.index = variant_npos;
     if (other.index() != variant_npos) {
       mu_help::construct_from_other(other.index(), other.storage.value, this->storage.value);
       storage.index = other.index();
     }
-
-    /// wtf aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-    //    visit([&](auto other_val) -> void {
-    //      multi_union_helper_t<First, Rest...>::template only_set<get_index_by_type<decltype(other_val), First,
-    //      Rest...>::index>(storage, other_val); st.index = get_index_by_type<decltype(other_val), First,
-    //      Rest...>::index;
-    //    }, other);
   }
 
   constexpr variant(variant&& other) requires(trivially_move_constructible<First, Rest...>) = default;
@@ -153,6 +70,10 @@ public:
             typename = std::enable_if_t<Index != variant_npos>>
   constexpr variant(T&& x) noexcept(std::is_nothrow_constructible_v<Type, T>) requires(std::is_constructible_v<Type, T>)
       : storage(in_place_index<Index>, std::forward<T>(x)) {}
+
+  /// END: constructors
+  ///------------------------------------------------------------------------------------///
+  /// operator=
 
   variant& operator=(const variant& other) noexcept
       requires(trivially_copy_assignable<First, Rest...>&& trivially_copy_constructible<First, Rest...>) = default;
@@ -185,7 +106,6 @@ public:
             other);
     } catch (...) {
       storage.index = variant_npos;
-      throw;
     }
 
     return *this;
@@ -198,13 +118,7 @@ public:
       nothrow_move_assignable<First, Rest...>&& nothrow_move_constructible<First, Rest...>)
       requires((move_assignable<First, Rest...> &&
                 move_constructible<First, Rest...>)&&!(trivially_move_assignable<First, Rest...> &&
-                                                       trivially_move_constructible<First, Rest...>))
-  //      noexcept(
-  //      std::conjunction_v<std::is_nothrow_move_assignable<Rest>...,
-  //      std::is_nothrow_move_assignable<First>>&&
-  //          std::conjunction_v<std::is_nothrow_move_constructible<Rest>...,
-  //                             std::is_nothrow_move_constructible<First>>)
-  {
+                                                       trivially_move_constructible<First, Rest...>)) {
     if (this == &other)
       return *this;
 
@@ -254,16 +168,9 @@ public:
     return *this;
   }
 
-  /// END: constructors
+  /// END: operator=
   ///------------------------------------------------------------------------------------///
-
-  constexpr size_t index() const noexcept {
-    return storage.index;
-  }
-
-  constexpr bool valueless_by_exception() const noexcept {
-    return storage.index == variant_npos;
-  }
+  /// emplace
 
   template <typename T, typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>,
             size_t Index = get_index_by_type<T, First, Rest...>::index,
@@ -289,6 +196,7 @@ public:
     storage.index = Index;
   }
 
+  /// END: emplace
   ///------------------------------------------------------------------------------------///
   /// get_from_index
 
@@ -341,10 +249,7 @@ public:
 
   /// END: get_if_from_index
   ///------------------------------------------------------------------------------------///
-
-  constexpr static size_t size() noexcept {
-    return sizeof...(Rest) + 1;
-  }
+  /// swap
 
   constexpr void swap(variant& other) {
     if (this == &other)
@@ -376,6 +281,25 @@ public:
       }
     }
   }
+
+  /// END: swap
+  ///------------------------------------------------------------------------------------///
+  /// Other variant Functions
+
+  constexpr static size_t size() noexcept {
+    return sizeof...(Rest) + 1;
+  }
+
+  constexpr size_t index() const noexcept {
+    return storage.index;
+  }
+
+  constexpr bool valueless_by_exception() const noexcept {
+    return storage.index == variant_npos;
+  }
+
+  /// END: Other variant Functions
+  ///------------------------------------------------------------------------------------///
 };
 
 /// END: variant
