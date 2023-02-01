@@ -45,21 +45,21 @@ public:
 
   constexpr variant(const variant& other) noexcept(helper::nothrow_copy_constructible<First, Rest...>)
       requires(helper::copy_constructible<First, Rest...> && !helper::trivially_copy_constructible<First, Rest...>) {
-    storage.constructor_from_other(other.storage);
+    storage.first_constructor_from_other(other.storage);
   }
 
   constexpr variant(variant&& other) requires(helper::trivially_move_constructible<First, Rest...>) = default;
 
   constexpr variant(variant&& other) noexcept(helper::nothrow_move_constructible<First, Rest...>)
       requires(helper::move_constructible<First, Rest...> && !helper::trivially_move_constructible<First, Rest...>) {
-    storage.constructor_from_other(std::move(other).storage);
+    storage.first_constructor_from_other(std::move(other).storage);
   }
 
   template <typename T, typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>,
-            typename Type = get_type_by_construct_type<T, First, Rest...>,
-            size_t Index = get_index_by_type<Type, First, Rest...>::index,
+            typename T_j = get_type_by_construct_type<T, First, Rest...>,
+            size_t Index = get_index_by_type<T_j, First, Rest...>::index,
             typename = std::enable_if_t<Index != variant_npos>>
-  constexpr variant(T&& x) noexcept(std::is_nothrow_constructible_v<Type, T>) requires(std::is_constructible_v<Type, T>)
+  constexpr variant(T&& x) noexcept(std::is_nothrow_constructible_v<T_j, T>) requires(std::is_constructible_v<T_j, T>)
       : storage(in_place_index<Index>, std::forward<T>(x)) {}
 
   /// END: constructors
@@ -78,7 +78,24 @@ public:
     if (this == &other)
       return *this;
 
-    storage.set_from_other(other.storage);
+    if (other.valueless_by_exception()) {
+      storage.reset();
+      return *this;
+    }
+
+    if (index() == other.index()) {
+      storage.template base_set_from_other(other.index(), other.storage);
+    } else {
+      visit_helper::do_visit(
+          [&, this](auto&& rhs) {
+            using rhs_t = std::decay_t<decltype(rhs)>;
+            if constexpr (std::is_nothrow_copy_constructible_v<rhs_t> || !std::is_nothrow_move_constructible_v<rhs_t>)
+              this->emplace<rhs_t>(rhs);
+            else
+              *this = variant(other);
+          },
+          other);
+    }
 
     return *this;
   }
@@ -95,18 +112,26 @@ public:
     if (this == &other)
       return *this;
 
+    if (other.valueless_by_exception()) {
+      storage.reset();
+      return *this;
+    }
+
     storage.set_from_other(std::move(other).storage);
 
     return *this;
   }
 
   template <typename T, typename = std::enable_if_t<!std::is_same_v<T, variant<First, Rest...>>>,
-            typename Type = get_type_by_construct_type<T, First, Rest...>,
-            size_t Index = get_index_by_type<Type, First, Rest...>::index,
+            typename T_j = get_type_by_construct_type<T, First, Rest...>,
+            size_t Index = get_index_by_type<T_j, First, Rest...>::index,
             typename = std::enable_if_t<Index != variant_npos>>
-  variant& operator=(T&& t) noexcept(std::is_nothrow_assignable_v<Type, T>) requires(std::is_assignable_v<Type, T>) {
+  variant& operator=(T&& t) noexcept(std::is_nothrow_assignable_v<T_j, T>) requires(std::is_assignable_v<T_j, T>) {
     if (index() != Index)
-      storage.template constructor<Index>(Type(std::forward<T>(t)));
+      if constexpr (std::is_nothrow_constructible_v<T_j, T> || !std::is_nothrow_move_constructible_v<T_j>)
+        storage.template constructor<Index>(std::forward<T>(t));
+      else
+        storage.template constructor<Index>(T_j(std::forward<T>(t)));
     else
       storage.template set<Index>(std::forward<T>(t));
     return *this;
@@ -183,7 +208,9 @@ public:
   ///------------------------------------------------------------------------------------///
   /// swap
 
-  constexpr void swap(variant& other) {
+  constexpr void swap(variant& other) noexcept(
+      std::is_nothrow_move_constructible_v<First>&& std::is_nothrow_swappable_v<First> &&
+      ((std::is_nothrow_move_constructible_v<Rest> && std::is_nothrow_swappable_v<Rest>)&&...)) {
     if (this == &other)
       return;
 

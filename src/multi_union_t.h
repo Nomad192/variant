@@ -178,6 +178,8 @@ template <typename... Types>
 struct normal_storage : base_storage_t<Types...> {
   size_t index = 0;
 
+  constexpr normal_storage() = default;
+
   template <size_t Index, typename... Args>
   constexpr explicit normal_storage(in_place_index_t<Index>, Args&&... args)
       : index(Index), base_storage_t<Types...>(in_place_index<Index>, std::forward<Args>(args)...) {}
@@ -206,21 +208,26 @@ struct normal_storage : base_storage_t<Types...> {
   }
 
   template <typename Other_PS>
+  constexpr void first_constructor_from_other(Other_PS&& other) {
+    this->index = variant_npos;
+    this->template base_constructor_from_other(other.index, std::forward<Other_PS>(other));
+    this->index = other.index;
+  }
+
+  template <typename Other_PS>
   constexpr void constructor_from_other(Other_PS&& other) {
-    size_t new_index = other.index;
     reset();
     this->template base_constructor_from_other(other.index, std::forward<Other_PS>(other));
-    this->index = new_index;
+    this->index = other.index;
   }
 
   template <typename Other_PS>
   constexpr void set_from_other(Other_PS&& other) {
-    size_t new_index = other.index;
     if (reset() == other.index)
       this->template base_set_from_other(other.index, std::forward<Other_PS>(other));
     else
       this->template base_constructor_from_other(other.index, std::forward<Other_PS>(other));
-    this->index = new_index;
+    this->index = other.index;
   }
 };
 
