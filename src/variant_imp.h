@@ -136,28 +136,28 @@ public:
   constexpr variant_alternative_t<Index, variant<First, Rest...>>& get_from_index() & {
     if (Index != index())
       throw bad_variant_access();
-    return multi_union_helper_t<First, Rest...>::template get<Index>(this->storage.value);
+    return storage.template get<Index>();
   }
 
   template <size_t Index>
   constexpr variant_alternative_t<Index, variant<First, Rest...>>&& get_from_index() && {
     if (Index != index())
       throw bad_variant_access();
-    return std::move(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage.value));
+    return std::move(storage.template get<Index>());
   }
 
   template <size_t Index>
   constexpr variant_alternative_t<Index, variant<First, Rest...>> const& get_from_index() const& {
     if (Index != index())
       throw bad_variant_access();
-    return multi_union_helper_t<First, Rest...>::template get<Index>(this->storage.value);
+    return storage.template get<Index>();
   }
 
   template <size_t Index>
   constexpr variant_alternative_t<Index, variant<First, Rest...>> const&& get_from_index() const&& {
     if (Index != index())
       throw bad_variant_access();
-    return std::move(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage.value));
+    return std::move(storage.template get<Index>());
   }
 
   /// END: get_from_index
@@ -168,7 +168,7 @@ public:
   constexpr std::add_pointer_t<variant_alternative_t<Index, variant<First, Rest...>>> get_if_from_index() noexcept {
     if (Index != index())
       return nullptr;
-    return std::addressof(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage.value));
+    return std::addressof(storage.template get<Index>());
   }
 
   template <std::size_t Index>
@@ -176,7 +176,7 @@ public:
   get_if_from_index() const noexcept {
     if (Index != index())
       return nullptr;
-    return std::addressof(multi_union_helper_t<First, Rest...>::template get<Index>(this->storage.value));
+    return std::addressof(storage.template get<Index>());
   }
 
   /// END: get_if_from_index
