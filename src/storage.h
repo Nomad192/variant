@@ -182,9 +182,9 @@ struct normal_storage : base_storage_t<Types...> {
 
   template <size_t Index, typename... Args>
   constexpr explicit normal_storage(in_place_index_t<Index>, Args&&... args)
-      : index(Index), base_storage_t<Types...>(in_place_index<Index>, std::forward<Args>(args)...) {}
+      : base_storage_t<Types...>(in_place_index<Index>, std::forward<Args>(args)...), index(Index) {}
 
-  size_t reset() {
+  constexpr size_t reset() {
     size_t prev_index = this->index;
     this->index = variant_npos;
     this->base_reset(prev_index);
