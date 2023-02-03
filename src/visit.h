@@ -106,7 +106,7 @@ struct Storage {
 
 template <typename Visitor, typename... Variants>
 constexpr auto visit_table(Visitor&& visitor, Variants&&... variants) {
-  using FirstVariant = get_type_from_pack<0, Variants...>::type;
+  using FirstVariant = typename get_type_from_pack<0, Variants...>::type;
   using FP = Function_Pointer<Visitor, Variants...>;
 
   Storage<Visitor, Variants...> storage{};
