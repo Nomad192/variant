@@ -51,42 +51,88 @@ struct get_variant_size_from_pack {
 
 /// END: get size from pack
 ///------------------------------------------------------------------------------------///
-/// visit_recursive
+/// Storage with Table_Recursive
 
-/// start at <0, 0> (<index first variant , index current variant>)
-template <size_t N, size_t Current_Variant, size_t... Indexes, typename Visitor, typename... Variants>
-constexpr auto visit_recursive(Visitor&& visitor, Variants&&... variants) {
-  if (N == get_variant_index_from_pack<Current_Variant, Variants...>(std::forward<Variants>(variants)...)) {
-    if constexpr (Current_Variant + 1 < sizeof...(Variants)) {
-      return visit_recursive<0, Current_Variant + 1, N, Indexes...>(std::forward<Visitor>(visitor),
-                                                                    std::forward<Variants>(variants)...);
-    } else {
-      return apply_indexes<N, Indexes...>(std::forward<Visitor>(visitor), std::forward<Variants>(variants)...);
+template <typename Visitor, typename... Variants>
+using ReturnType = decltype(std::forward<Visitor>(std::declval<Visitor>())(
+    get<0>(std::forward<Variants>(std::declval<Variants>()))...)); /// Visitor Return Type
+
+template <typename Visitor, typename... Variants>
+using Function_Pointer = ReturnType<Visitor, Variants...> (*)(Visitor&&,
+                                                              Variants&&...); /// apply_indexes function pointer
+
+template <typename Visitor, typename... Variants>
+struct Storage {
+  using FP = Function_Pointer<Visitor, Variants...>;
+
+  template <typename FirstVariant, typename... RestVariants>
+  struct Table_Recursive {
+    Table_Recursive<RestVariants...> table[get_variant_size<FirstVariant>::size];
+
+    template <size_t... Pre_S, typename Ts, Ts... ints>
+    constexpr void make_table(std::integer_sequence<Ts, ints...>) {
+      ((table[ints].template make_table<Pre_S..., ints>(
+           std::make_integer_sequence<size_t, get_variant_size<FirstVariant>::size>{})),
+       ...);
     }
-  }
 
-  if constexpr (N + 1 < get_variant_size_from_pack<Current_Variant, Variants...>::size) {
-    return visit_recursive<N + 1, Current_Variant, Indexes...>(std::forward<Visitor>(visitor),
-                                                               std::forward<Variants>(variants)...);
-  }
-  assert(false); /// so that the compiler doesn't complain about the non-void function TODO: remove?
+    template <typename... Rest>
+    constexpr FP get_func(size_t first, Rest&&... rest) {
+      return table[first].get_func(rest...);
+    }
+  };
+  template <typename LastVariant>
+  struct Table_Recursive<LastVariant> {
+    using FP = Function_Pointer<Visitor, Variants...>;
+
+    FP table[get_variant_size<LastVariant>::size];
+
+    template <size_t... Pre_S, typename Ts, Ts... ints>
+    constexpr void make_table(std::integer_sequence<Ts, ints...>) {
+      ((table[ints] = &apply_indexes<Pre_S..., ints>), ...);
+    }
+
+    constexpr FP get_func(size_t first) {
+      return table[first];
+    }
+  };
+
+  Table_Recursive<Variants...> table;
+};
+
+/// END: Storage with Table_Recursive
+///------------------------------------------------------------------------------------///
+/// visit_table
+
+template <typename Visitor, typename... Variants>
+constexpr auto visit_table(Visitor&& visitor, Variants&&... variants) {
+  using FirstVariant = get_type_from_pack<0, Variants...>::type;
+  using FP = Function_Pointer<Visitor, Variants...>;
+
+  Storage<Visitor, Variants...> storage{};
+  storage.table.template make_table<>(std::make_integer_sequence<size_t, get_variant_size<FirstVariant>::size>{});
+
+  FP func = storage.table.get_func(std::forward<Variants>(variants).index()...);
+  return func(std::forward<Visitor>(visitor), std::forward<Variants>(variants)...);
 }
 
-/// END: visit_recursive
+/// END: visit_table
 ///------------------------------------------------------------------------------------///
 /// do_visit (some optimizations)
 
 template <typename Visitor, typename... Variants>
-constexpr auto do_visit(Visitor&& visitor, Variants&&... variants) {
-  if constexpr (sizeof...(Variants) == 0) {
+constexpr auto do_visit(Visitor&& visitor, Variants&&... variants) { /// Visit optimizations
+  if constexpr (sizeof...(Variants) == 0) {                          /// Optimization, the number of variants is zero
     return std::forward<Visitor>(visitor)();
   }
-  if constexpr (((get_variant_size<Variants>::size == 1) && ...)) {
+  if constexpr (((get_variant_size<Variants>::size == 1) &&
+                 ...)) { /// Optimization, the number of variations in each variant is equal to one
     return apply_indexes<0>(std::forward<Visitor>(visitor), std::forward<Variants>(variants)...);
   }
   /// start at <0, 0> (<index first variant , index current variant>)
-  return visit_recursive<0, 0>(std::forward<Visitor>(visitor), std::forward<Variants>(variants)...);
+  return visit_table<Visitor, Variants...>(std::forward<Visitor>(visitor), std::forward<Variants>(variants)...);
 }
+
 /// END: do_visit (some optimizations)
 ///------------------------------------------------------------------------------------///
 } // namespace visit_helper
