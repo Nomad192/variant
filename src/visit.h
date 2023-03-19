@@ -76,8 +76,7 @@ struct Storage {
 
   public:
     template <size_t... Pre_S>
-    constexpr void make_seq()
-    {
+    constexpr void make_seq() {
       auto seq = std::make_integer_sequence<size_t, get_variant_size<FirstVariant>::size>{};
       this->template make_table<Pre_S...>(seq);
     }
@@ -98,8 +97,7 @@ struct Storage {
 
   public:
     template <size_t... Pre_S>
-    constexpr void make_seq()
-    {
+    constexpr void make_seq() {
       auto seq = std::make_integer_sequence<size_t, get_variant_size<LastVariant>::size>{};
       this->template make_table<Pre_S...>(seq);
     }
@@ -109,8 +107,7 @@ struct Storage {
     }
   };
 
-  static constexpr Table_Recursive<Variants...> get_table()
-  {
+  static constexpr Table_Recursive<Variants...> get_table() {
     Table_Recursive<Variants...> result;
     result.template make_seq<>();
     return result;
