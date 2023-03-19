@@ -66,25 +66,29 @@ struct Storage {
   using FP = Function_Pointer<Visitor, Variants...>;
 
   template <typename FirstVariant, typename... RestVariants>
-  struct Table_Recursive {
+  class Table_Recursive {
     Table_Recursive<RestVariants...> table[get_variant_size<FirstVariant>::size];
 
     template <size_t... Pre_S, typename Ts, Ts... ints>
     constexpr void make_table(std::integer_sequence<Ts, ints...>) {
-      ((table[ints].template make_table<Pre_S..., ints>(
-           std::make_integer_sequence<size_t, get_variant_size<FirstVariant>::size>{})),
-       ...);
+      ((table[ints].template make_seq<Pre_S..., ints>()), ...);
+    }
+
+  public:
+    template <size_t... Pre_S>
+    constexpr void make_seq()
+    {
+      auto seq = std::make_integer_sequence<size_t, get_variant_size<FirstVariant>::size>{};
+      this->template make_table<Pre_S...>(seq);
     }
 
     template <typename... Rest>
-    constexpr FP get_func(size_t first, Rest&&... rest) {
+    constexpr FP get_func(size_t first, Rest&&... rest) const {
       return table[first].get_func(rest...);
     }
   };
   template <typename LastVariant>
-  struct Table_Recursive<LastVariant> {
-    using FP = Function_Pointer<Visitor, Variants...>;
-
+  class Table_Recursive<LastVariant> {
     FP table[get_variant_size<LastVariant>::size];
 
     template <size_t... Pre_S, typename Ts, Ts... ints>
@@ -92,12 +96,27 @@ struct Storage {
       ((table[ints] = &apply_indexes<Pre_S..., ints>), ...);
     }
 
-    constexpr FP get_func(size_t first) {
+  public:
+    template <size_t... Pre_S>
+    constexpr void make_seq()
+    {
+      auto seq = std::make_integer_sequence<size_t, get_variant_size<LastVariant>::size>{};
+      this->template make_table<Pre_S...>(seq);
+    }
+
+    constexpr FP get_func(size_t first) const {
       return table[first];
     }
   };
 
-  Table_Recursive<Variants...> table;
+  static constexpr Table_Recursive<Variants...> get_table()
+  {
+    Table_Recursive<Variants...> result;
+    result.template make_seq<>();
+    return result;
+  }
+
+  static constexpr Table_Recursive<Variants...> table = get_table();
 };
 
 /// END: Storage with Table_Recursive
@@ -106,13 +125,9 @@ struct Storage {
 
 template <typename Visitor, typename... Variants>
 constexpr auto visit_table(Visitor&& visitor, Variants&&... variants) {
-  using FirstVariant = typename get_type_from_pack<0, Variants...>::type;
   using FP = Function_Pointer<Visitor, Variants...>;
 
-  Storage<Visitor, Variants...> storage{};
-  storage.table.template make_table<>(std::make_integer_sequence<size_t, get_variant_size<FirstVariant>::size>{});
-
-  FP func = storage.table.get_func(std::forward<Variants>(variants).index()...);
+  FP func = Storage<Visitor, Variants...>::table.get_func(std::forward<Variants>(variants).index()...);
   return func(std::forward<Visitor>(visitor), std::forward<Variants>(variants)...);
 }
 
