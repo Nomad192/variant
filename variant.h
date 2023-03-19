@@ -1,4 +1,4 @@
 #pragma once
 
-#include "src/variant_imp.h"
 #include "src/comparisons.h"
+#include "src/variant_imp.h"

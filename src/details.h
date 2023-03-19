@@ -1,7 +1,7 @@
 #pragma once
 
-#include <utility>
 #include <exception>
+#include <utility>
 
 template <typename First, typename... Rest>
 struct variant;

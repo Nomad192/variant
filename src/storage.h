@@ -1,8 +1,8 @@
 #pragma once
 
+#include <memory>
 #include <new>
 #include <utility>
-#include <memory>
 
 #include "details.h"
 
