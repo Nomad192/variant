@@ -127,13 +127,15 @@ public:
             size_t Index = get_index_by_type<T_j, First, Rest...>::index,
             typename = std::enable_if_t<Index != variant_npos>>
   variant& operator=(T&& t) noexcept(std::is_nothrow_assignable_v<T_j, T>) requires(std::is_assignable_v<T_j, T>) {
-    if (index() != Index)
-      if constexpr (std::is_nothrow_constructible_v<T_j, T> || !std::is_nothrow_move_constructible_v<T_j>)
+    if (index() != Index) {
+      if constexpr (std::is_nothrow_constructible_v<T_j, T> || !std::is_nothrow_move_constructible_v<T_j>) {
         storage.template constructor<Index>(std::forward<T>(t));
-      else
+      } else {
         storage.template constructor<Index>(T_j(std::forward<T>(t)));
-    else
+      }
+    } else {
       storage.template set<Index>(std::forward<T>(t));
+    }
     return *this;
   }
 
@@ -234,9 +236,7 @@ public:
         other = std::move(*this);
         storage.index = variant_npos;
       } else {
-        variant<First, Rest...> buffer = std::move(other);
-        other = std::move(*this);
-        *this = std::move(buffer);
+        std::swap(*this, other);
       }
     }
   }

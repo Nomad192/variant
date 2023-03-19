@@ -2,6 +2,7 @@
 
 #include <new>
 #include <utility>
+#include <memory>
 
 #include "details.h"
 
@@ -10,61 +11,61 @@
 namespace helper {
 
 template <bool is_trivially_destructible, typename... Types>
-struct multi_union_t_DEFAULT_DESTRUCTIBLE {};
+struct multi_union_t_default_destructible {};
 
 template <typename... Types>
 using multi_union_t =
-    multi_union_t_DEFAULT_DESTRUCTIBLE<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
+    multi_union_t_default_destructible<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
 
 template <typename... Rest>
 struct base_storage_t {};
 
 ///==================================================================================================================///
-/// multi_union_t_DEFAULT_DESTRUCTIBLE
+/// multi_union_t_default_destructible
 
 template <typename First, typename... Rest>
-struct multi_union_t_DEFAULT_DESTRUCTIBLE<false, First, Rest...> {
+struct multi_union_t_default_destructible<false, First, Rest...> {
   union {
     First first;
     base_storage_t<Rest...> rest;
     char for_trivial_initialization = 0;
   };
 
-  constexpr explicit multi_union_t_DEFAULT_DESTRUCTIBLE() {}
+  constexpr explicit multi_union_t_default_destructible() {}
 
   template <typename... Args>
-  constexpr explicit multi_union_t_DEFAULT_DESTRUCTIBLE(in_place_index_t<0>, Args&&... args)
+  constexpr explicit multi_union_t_default_destructible(in_place_index_t<0>, Args&&... args)
       : first(std::forward<Args>(args)...) {}
 
   template <size_t N, typename... Args>
-  constexpr explicit multi_union_t_DEFAULT_DESTRUCTIBLE(in_place_index_t<N>, Args&&... args)
+  constexpr explicit multi_union_t_default_destructible(in_place_index_t<N>, Args&&... args)
       : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
 
-  ~multi_union_t_DEFAULT_DESTRUCTIBLE(){};
+  ~multi_union_t_default_destructible(){};
 };
 
 template <typename First, typename... Rest>
-struct multi_union_t_DEFAULT_DESTRUCTIBLE<true, First, Rest...> {
+struct multi_union_t_default_destructible<true, First, Rest...> {
   union {
     First first;
     base_storage_t<Rest...> rest;
     char for_trivial_initialization = 0;
   };
 
-  constexpr explicit multi_union_t_DEFAULT_DESTRUCTIBLE() {}
+  constexpr explicit multi_union_t_default_destructible() {}
 
   template <typename... Args>
-  constexpr explicit multi_union_t_DEFAULT_DESTRUCTIBLE(in_place_index_t<0>, Args&&... args)
+  constexpr explicit multi_union_t_default_destructible(in_place_index_t<0>, Args&&... args)
       : first(std::forward<Args>(args)...) {}
 
   template <size_t N, typename... Args>
-  constexpr explicit multi_union_t_DEFAULT_DESTRUCTIBLE(in_place_index_t<N>, Args&&... args)
+  constexpr explicit multi_union_t_default_destructible(in_place_index_t<N>, Args&&... args)
       : rest(in_place_index<N - 1>, std::forward<Args>(args)...) {}
 
-  ~multi_union_t_DEFAULT_DESTRUCTIBLE() = default;
+  ~multi_union_t_default_destructible() = default;
 };
 
-/// END: multi_union_t_DEFAULT_DESTRUCTIBLE
+/// END: multi_union_t_default_destructible
 ///==================================================================================================================///
 /// base_storage_t
 
@@ -233,28 +234,28 @@ struct normal_storage : base_storage_t<Types...> {
 
 /// END: normal_storage_t
 ///==================================================================================================================///
-/// storage_t_DEFAULT_DESTRUCTIBLE
+/// storage_t_default_destructible
 
 template <bool is_trivially_destructible, typename... Types>
-struct storage_t_DEFAULT_DESTRUCTIBLE {};
+struct storage_t_default_destructible {};
 
 template <typename... Types>
-struct storage_t_DEFAULT_DESTRUCTIBLE<true, Types...> : normal_storage<Types...> {
+struct storage_t_default_destructible<true, Types...> : normal_storage<Types...> {
   using normal_storage<Types...>::normal_storage;
 
-  ~storage_t_DEFAULT_DESTRUCTIBLE() = default;
+  ~storage_t_default_destructible() = default;
 };
 
 template <typename... Types>
-struct storage_t_DEFAULT_DESTRUCTIBLE<false, Types...> : normal_storage<Types...> {
+struct storage_t_default_destructible<false, Types...> : normal_storage<Types...> {
   using normal_storage<Types...>::normal_storage;
 
-  ~storage_t_DEFAULT_DESTRUCTIBLE() {
+  ~storage_t_default_destructible() {
     this->reset();
   };
 };
 
-/// END: storage_t_DEFAULT_DESTRUCTIBLE
+/// END: storage_t_default_destructible
 ///==================================================================================================================///
 } // namespace helper
 
@@ -264,7 +265,7 @@ struct storage_t_DEFAULT_DESTRUCTIBLE<false, Types...> : normal_storage<Types...
 
 template <typename... Types>
 using storage_t =
-    helper::storage_t_DEFAULT_DESTRUCTIBLE<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
+    helper::storage_t_default_destructible<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
 
 /// END: storage_t
 ///==================================================================================================================///
