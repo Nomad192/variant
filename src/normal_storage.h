@@ -84,11 +84,12 @@ struct normal_storage : base_storage_t<Types...> {
       visit_helper::visit_table_indexes(
           [this, &other](auto index) {
             size_t prev_index = this->pos;
-            this->pos = variant_npos;
-            if (prev_index == index())
+            reset();
+            if (prev_index == index()) {
               this->template base_set_from_other<index()>(std::forward<Other_PS>(other));
-            else
+            } else {
               this->template base_constructor_from_other<index()>(std::forward<Other_PS>(other));
+            }
             this->pos = index();
           },
           other);
