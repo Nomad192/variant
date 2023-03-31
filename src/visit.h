@@ -11,11 +11,9 @@ namespace visit_helper {
 ///------------------------------------------------------------------------------------///
 /// Apply_Indexes
 template <typename Visitor, typename... Variants>
-struct Apply
-{
+struct Apply {
   template <size_t... Indexes>
-  constexpr auto operator()(Visitor&& visitor, Variants&&... variants)
-  {
+  constexpr auto operator()(Visitor&& visitor, Variants&&... variants) {
     return std::forward<Visitor>(visitor)(get<Indexes>(std::forward<Variants>(variants))...);
   }
 };
@@ -28,8 +26,9 @@ using NormalReturnType = decltype(std::forward<Visitor>(std::declval<Visitor>())
     get<0>(std::forward<Variants>(std::declval<Variants>()))...)); /// Visitor Return Type
 
 template <typename ApplyVisitor, typename Visitor, typename... Variants>
-using Normal_Handler_Function_Pointer = NormalReturnType<Visitor, Variants...> (*)(ApplyVisitor&&, Visitor&&,
-                                                                      Variants&&...); /// get_func function pointer
+using Normal_Handler_Function_Pointer =
+    NormalReturnType<Visitor, Variants...> (*)(ApplyVisitor&&, Visitor&&,
+                                               Variants&&...); /// get_func function pointer
 
 ///------------------------------------------------------------------------------------///
 /// visit_table
@@ -44,7 +43,6 @@ constexpr auto visit_table(Visitor&& visitor, Variants&&... variants) {
   A apply;
   return handler(std::forward<A>(apply), std::forward<Visitor>(visitor), std::forward<Variants>(variants)...);
 }
-
 
 /// END: visit_table
 ///------------------------------------------------------------------------------------///

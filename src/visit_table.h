@@ -11,11 +11,9 @@ namespace visit_helper {
 ///------------------------------------------------------------------------------------///
 /// Apply_Indexes
 template <typename Visitor, typename... Variants>
-struct Apply_Indexes
-{
+struct Apply_Indexes {
   template <size_t... Indexes>
-  constexpr auto operator()(Visitor&& visitor, Variants&&... variants)
-  {
+  constexpr auto operator()(Visitor&& visitor, Variants&&... variants) {
     return std::forward<Visitor>(visitor)(std::integral_constant<size_t, Indexes>{}...);
   }
 };
@@ -58,11 +56,13 @@ struct get_variant_size_from_pack {
 /// Storage with Table_Recursive
 
 template <typename Visitor, typename... Variants>
-using TableReturnType = decltype(std::forward<Visitor>(std::declval<Visitor>())(std::integral_constant<size_t, get_variant_size<Variants>::size>{}...)); /// Visitor Return Type
+using TableReturnType = decltype(std::forward<Visitor>(std::declval<Visitor>())(
+    std::integral_constant<size_t, get_variant_size<Variants>::size>{}...)); /// Visitor Return Type
 
 template <typename ApplyVisitor, typename Visitor, typename... Variants>
-using Table_Handler_Function_Pointer = TableReturnType<Visitor, Variants...> (*)(ApplyVisitor&&, Visitor&&,
-                                                                      Variants&&...); /// get_func function pointer
+using Table_Handler_Function_Pointer =
+    TableReturnType<Visitor, Variants...> (*)(ApplyVisitor&&, Visitor&&,
+                                              Variants&&...); /// get_func function pointer
 
 ///------------------------------------------------------------------------------------///
 /// apply_handler
@@ -145,7 +145,6 @@ constexpr auto visit_table_indexes(Visitor&& visitor, Variants&&... variants) {
   A apply;
   return handler(std::forward<A>(apply), std::forward<Visitor>(visitor), std::forward<Variants>(variants)...);
 }
-
 
 /// END: visit_table
 ///------------------------------------------------------------------------------------///

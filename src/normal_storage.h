@@ -17,13 +17,15 @@ struct normal_storage : base_storage_t<Types...> {
 
   constexpr size_t reset() {
     if (pos != variant_npos)
-      return visit_helper::visit_table_indexes([this]<size_t I>(std::integral_constant<size_t, I>){
-        size_t prev_index = I;
-        this->pos = variant_npos;
-        this->template base_reset<I>();
+      return visit_helper::visit_table_indexes(
+          [this]<size_t I>(std::integral_constant<size_t, I>) {
+            size_t prev_index = I;
+            this->pos = variant_npos;
+            this->template base_reset<I>();
 
-        return prev_index;
-      }, *this);
+            return prev_index;
+          },
+          *this);
 
     return pos;
   }
@@ -67,8 +69,7 @@ struct normal_storage : base_storage_t<Types...> {
     this->pos = other.pos;
   }
 
-  size_t index()
-  {
+  size_t index() {
     return pos;
   }
 

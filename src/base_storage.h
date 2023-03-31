@@ -76,7 +76,7 @@ struct base_storage_t<First, Rest...> : multi_union_t<First, Rest...> {
   ///================================================================================================================///
   /// base_set
 
-  template<size_t Index>
+  template <size_t Index>
   constexpr void base_reset() {
     if constexpr (Index == 0)
       this->first.~First();
