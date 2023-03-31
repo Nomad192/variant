@@ -16,16 +16,18 @@ struct normal_storage : base_storage_t<Types...> {
       : base_storage_t<Types...>(in_place_index<Index>, std::forward<Args>(args)...), pos(Index) {}
 
   constexpr size_t reset() {
-    if (pos != variant_npos)
-      return visit_helper::visit_table_indexes(
-          [this]<size_t I>(std::integral_constant<size_t, I>) {
-            size_t prev_index = I;
-            this->pos = variant_npos;
-            this->template base_reset<I>();
+    if (pos != variant_npos) {
+      size_t prev_index = this->pos;
 
-            return prev_index;
+      visit_helper::visit_table_indexes(
+          [this](auto index) {
+            this->pos = variant_npos;
+            this->template base_reset<index()>();
           },
           *this);
+
+      return prev_index;
+    }
 
     return pos;
   }
@@ -48,28 +50,54 @@ struct normal_storage : base_storage_t<Types...> {
 
   template <typename Other_PS>
   constexpr void first_constructor_from_other(Other_PS&& other) {
-    this->pos = variant_npos;
-    this->template base_constructor_from_other(other.pos, std::forward<Other_PS>(other));
-    this->pos = other.pos;
+    if (pos != variant_npos) {
+      visit_helper::visit_table_indexes(
+          [this, &other](auto index) {
+            this->pos = variant_npos;
+            this->template base_constructor_from_other<index()>(std::forward<Other_PS>(other));
+            this->pos = index();
+          },
+          other);
+    } else {
+      this->pos = variant_npos;
+    }
   }
 
   template <typename Other_PS>
   constexpr void constructor_from_other(Other_PS&& other) {
-    reset();
-    this->template base_constructor_from_other(other.pos, std::forward<Other_PS>(other));
-    this->pos = other.pos;
+    if (pos != variant_npos) {
+      visit_helper::visit_table_indexes(
+          [this, &other](auto index) {
+            reset();
+            this->template base_constructor_from_other<index()>(std::forward<Other_PS>(other));
+            this->pos = index();
+          },
+          other);
+    } else {
+      this->pos = variant_npos;
+    }
   }
 
   template <typename Other_PS>
   constexpr void set_from_other(Other_PS&& other) {
-    if (reset() == other.pos)
-      this->template base_set_from_other(other.pos, std::forward<Other_PS>(other));
-    else
-      this->template base_constructor_from_other(other.pos, std::forward<Other_PS>(other));
-    this->pos = other.pos;
+    if (other.pos != variant_npos) {
+      visit_helper::visit_table_indexes(
+          [this, &other](auto index) {
+            size_t prev_index = this->pos;
+            this->pos = variant_npos;
+            if (prev_index == index())
+              this->template base_set_from_other<index()>(std::forward<Other_PS>(other));
+            else
+              this->template base_constructor_from_other<index()>(std::forward<Other_PS>(other));
+            this->pos = index();
+          },
+          other);
+    } else {
+      this->pos = variant_npos;
+    }
   }
 
-  size_t index() {
+  constexpr size_t index() const {
     return pos;
   }
 

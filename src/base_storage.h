@@ -28,7 +28,6 @@ struct multi_union_t_default_destructible<false, First, Rest...> {
   union {
     First first;
     base_storage_t<Rest...> rest;
-    char for_trivial_initialization = 0;
   };
 
   constexpr explicit multi_union_t_default_destructible() {}
@@ -49,7 +48,6 @@ struct multi_union_t_default_destructible<true, First, Rest...> {
   union {
     First first;
     base_storage_t<Rest...> rest;
-    char for_trivial_initialization = 0;
   };
 
   constexpr explicit multi_union_t_default_destructible() {}
@@ -78,7 +76,7 @@ struct base_storage_t<First, Rest...> : multi_union_t<First, Rest...> {
 
   template <size_t Index>
   constexpr void base_reset() {
-    if constexpr (Index == 0)
+    if constexpr (sizeof...(Rest) == 0 || Index == 0)
       this->first.~First();
     else if constexpr (sizeof...(Rest) > 0)
       this->rest.template base_reset<Index - 1>();
@@ -100,20 +98,20 @@ struct base_storage_t<First, Rest...> : multi_union_t<First, Rest...> {
       this->rest.template base_set<Index - 1, T>(std::forward<T>(other));
   }
 
-  template <typename Other_MU>
-  constexpr void base_constructor_from_other(size_t ind, Other_MU&& from) {
-    if (ind == 0 || sizeof...(Rest) == 0)
+  template <size_t Index, typename Other_MU>
+  constexpr void base_constructor_from_other(Other_MU&& from) {
+    if constexpr (sizeof...(Rest) == 0 || Index == 0)
       std::construct_at(std::addressof(this->first), std::forward<Other_MU>(from).first);
     else if constexpr (sizeof...(Rest) > 0)
-      this->rest.template base_constructor_from_other(ind - 1, std::forward<Other_MU>(from).rest);
+      this->rest.template base_constructor_from_other<Index - 1>(std::forward<Other_MU>(from).rest);
   }
 
-  template <typename Other_MU>
-  constexpr void base_set_from_other(size_t ind, Other_MU&& from) {
-    if (ind == 0 || sizeof...(Rest) == 0)
+  template <size_t Index, typename Other_MU>
+  constexpr void base_set_from_other(Other_MU&& from) {
+    if constexpr (sizeof...(Rest) == 0 || Index == 0)
       this->first = std::forward<Other_MU>(from).first;
     else if constexpr (sizeof...(Rest) > 0)
-      this->rest.template base_set_from_other(ind - 1, std::forward<Other_MU>(from).rest);
+      this->rest.template base_set_from_other<Index - 1>(std::forward<Other_MU>(from).rest);
   }
 
   /// END: base_set

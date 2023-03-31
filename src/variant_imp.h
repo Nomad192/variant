@@ -83,19 +83,24 @@ public:
       return *this;
     }
 
-    if (index() == other.index()) {
-      storage.template base_set_from_other(other.index(), other.storage);
-    } else {
-      visit_helper::do_visit(
-          [&, this](auto&& rhs) {
-            using rhs_t = std::decay_t<decltype(rhs)>;
-            if constexpr (std::is_nothrow_copy_constructible_v<rhs_t> || !std::is_nothrow_move_constructible_v<rhs_t>)
-              this->emplace<rhs_t>(rhs);
-            else
-              *this = variant(other);
-          },
-          other);
-    }
+    visit_helper::visit_table_indexes(
+        [this, &other](auto index1, auto index2) {
+          if constexpr (index1() == index2()) {
+            storage.template base_set_from_other<index2()>(other.storage);
+          }
+          else
+          {
+            visit_helper::do_visit(
+                [&, this](auto&& rhs) {
+                  using rhs_t = std::decay_t<decltype(rhs)>;
+                  if constexpr (std::is_nothrow_copy_constructible_v<rhs_t> || !std::is_nothrow_move_constructible_v<rhs_t>)
+                    this->emplace<rhs_t>(rhs);
+                  else
+                    *this = variant(other);
+                },
+                other);
+          }
+        }, this->storage, other.storage);
 
     return *this;
   }
