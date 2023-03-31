@@ -87,20 +87,20 @@ public:
         [this, &other](auto index1, auto index2) {
           if constexpr (index1() == index2()) {
             storage.template base_set_from_other<index2()>(other.storage);
-          }
-          else
-          {
+          } else {
             visit_helper::do_visit(
                 [&, this](auto&& rhs) {
                   using rhs_t = std::decay_t<decltype(rhs)>;
-                  if constexpr (std::is_nothrow_copy_constructible_v<rhs_t> || !std::is_nothrow_move_constructible_v<rhs_t>)
+                  if constexpr (std::is_nothrow_copy_constructible_v<rhs_t> ||
+                                !std::is_nothrow_move_constructible_v<rhs_t>)
                     this->emplace<rhs_t>(rhs);
                   else
                     *this = variant(other);
                 },
                 other);
           }
-        }, this->storage, other.storage);
+        },
+        this->storage, other.storage);
 
     return *this;
   }
