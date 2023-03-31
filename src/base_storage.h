@@ -76,11 +76,12 @@ struct base_storage_t<First, Rest...> : multi_union_t<First, Rest...> {
   ///================================================================================================================///
   /// base_set
 
-  constexpr void base_reset(size_t index) {
-    if (index == 0)
+  template<size_t Index>
+  constexpr void base_reset() {
+    if constexpr (Index == 0)
       this->first.~First();
     else if constexpr (sizeof...(Rest) > 0)
-      this->rest.base_reset(index - 1);
+      this->rest.template base_reset<Index - 1>();
   }
 
   template <size_t Index, typename... Args>
@@ -172,100 +173,4 @@ struct base_storage_t<First, Rest...> : multi_union_t<First, Rest...> {
 };
 
 /// END: base_storage_t
-///==================================================================================================================///
-/// normal_storage_t
-
-template <typename... Types>
-struct normal_storage : base_storage_t<Types...> {
-  size_t index = 0;
-
-  constexpr normal_storage() = default;
-
-  template <size_t Index, typename... Args>
-  constexpr explicit normal_storage(in_place_index_t<Index>, Args&&... args)
-      : base_storage_t<Types...>(in_place_index<Index>, std::forward<Args>(args)...), index(Index) {}
-
-  constexpr size_t reset() {
-    size_t prev_index = this->index;
-    this->index = variant_npos;
-    this->base_reset(prev_index);
-    return prev_index;
-  }
-
-  template <size_t Index, typename... Args>
-  constexpr void constructor(Args&&... args) {
-    reset();
-    this->template base_constructor<Index>(std::forward<Args>(args)...);
-    this->index = Index;
-  }
-
-  template <size_t Index, typename T>
-  constexpr void set(T&& t) {
-    if (reset() == Index)
-      this->template base_set<Index>(std::forward<T>(t));
-    else
-      this->template base_constructor<Index>(std::forward<T>(t));
-    this->index = Index;
-  }
-
-  template <typename Other_PS>
-  constexpr void first_constructor_from_other(Other_PS&& other) {
-    this->index = variant_npos;
-    this->template base_constructor_from_other(other.index, std::forward<Other_PS>(other));
-    this->index = other.index;
-  }
-
-  template <typename Other_PS>
-  constexpr void constructor_from_other(Other_PS&& other) {
-    reset();
-    this->template base_constructor_from_other(other.index, std::forward<Other_PS>(other));
-    this->index = other.index;
-  }
-
-  template <typename Other_PS>
-  constexpr void set_from_other(Other_PS&& other) {
-    if (reset() == other.index)
-      this->template base_set_from_other(other.index, std::forward<Other_PS>(other));
-    else
-      this->template base_constructor_from_other(other.index, std::forward<Other_PS>(other));
-    this->index = other.index;
-  }
-};
-
-/// END: normal_storage_t
-///==================================================================================================================///
-/// storage_t_default_destructible
-
-template <bool is_trivially_destructible, typename... Types>
-struct storage_t_default_destructible {};
-
-template <typename... Types>
-struct storage_t_default_destructible<true, Types...> : normal_storage<Types...> {
-  using normal_storage<Types...>::normal_storage;
-
-  ~storage_t_default_destructible() = default;
-};
-
-template <typename... Types>
-struct storage_t_default_destructible<false, Types...> : normal_storage<Types...> {
-  using normal_storage<Types...>::normal_storage;
-
-  ~storage_t_default_destructible() {
-    this->reset();
-  };
-};
-
-/// END: storage_t_default_destructible
-///==================================================================================================================///
 } // namespace helper
-
-/// END: helper
-///==================================================================================================================///
-/// storage_t
-
-template <typename... Types>
-using storage_t =
-    helper::storage_t_default_destructible<std::conjunction_v<std::is_trivially_destructible<Types>...>, Types...>;
-
-/// END: storage_t
-///==================================================================================================================///

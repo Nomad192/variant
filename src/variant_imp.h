@@ -1,7 +1,7 @@
 #pragma once
 
 #include "concepts.h"
-#include "storage.h"
+#include "normal_storage.h"
 
 ///==================================================================================================================///
 /// do_visit declaration
@@ -225,16 +225,16 @@ public:
                 swap(a, b);
             },
             *this, other);
-        std::swap(storage.index, other.storage.index);
+        std::swap(storage.pos, other.storage.pos);
       }
       return;
     } else {
       if (this->valueless_by_exception()) {
         *this = std::move(other);
-        other.storage.index = variant_npos;
+        other.storage.pos = variant_npos;
       } else if (other.valueless_by_exception()) {
         other = std::move(*this);
-        storage.index = variant_npos;
+        storage.pos = variant_npos;
       } else {
         std::swap(*this, other);
       }
@@ -250,11 +250,11 @@ public:
   }
 
   constexpr bool valueless_by_exception() const noexcept {
-    return storage.index == variant_npos;
+    return index() == variant_npos;
   }
 
   constexpr size_t index() const noexcept {
-    return storage.index;
+    return storage.pos;
   }
 
   /// END: Other variant Functions
