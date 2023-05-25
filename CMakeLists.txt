@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(GTest REQUIRED)
 
-add_executable(tests tests.cpp test-classes.cpp)
+add_executable(tests tests.cpp test-classes.cpp src/details.cpp)
 
 if (NOT MSVC)
   target_compile_options(tests PRIVATE -Wall -Wextra -Wshadow=compatible-local -Wno-sign-compare -pedantic)
@@ -22,6 +22,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   message(STATUS "Enabling libc++...")
   target_compile_options(tests PUBLIC -stdlib=libc++)
   target_link_options(tests PUBLIC -stdlib=libc++)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  message(STATUS "Enabling concepts...")
+  target_compile_options(tests PUBLIC -fconcepts)
 endif()
 
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
